@@ -71,9 +71,9 @@ const styles = theme => ({
   appBarSpacer: theme.mixins.toolbar,
   content: {
     flexGrow: 1,
-    padding: theme.spacing.unit * 3,
-    height: '100vh',
-    overflow: 'auto',
+    //padding: theme.spacing.unit * 3,
+    height: 'calc(100vh - 72px)',
+    overflow: 'hidden',
     marginTop: 72
   },
   h5: {
@@ -126,7 +126,7 @@ class App extends Component {
           <Drawer variant="permanent" classes={{ paper: classes.drawerPaper }}>
             {this.state.currentTrack.mainTrack.trackSegments.length} segments in the MainTrack
           </Drawer>
-          <TrackViewer className={classes.content} />
+          <TrackViewer classes={classes} track={this.state.currentTrack}/>
         </main>
       </MuiThemeProvider>
     );
