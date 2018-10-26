@@ -1,0 +1,45 @@
+.ConductorName {
+	font-size: 1.2em;
+	font-variant: small-caps;
+	letter-spacing: .125em;
+	color: $color-text-heavy;
+}
+
+.JobsList, .ClientsList {
+	.rc-collapse-content-box {
+		display: flex;
+		flex-wrap: wrap;
+	}
+}
+
+.JobInfo {
+	margin: 1em;
+	flex: 1 1 30%;
+}
+
+.NetworkWorkerStatus {
+	margin: 1em;
+}
+
+.Collapsible.rc-collapse {
+	margin-top: 1em;
+	background-color: transparent;
+	border: none;
+	border-radius: 0;
+	border-top: 1px solid $color-secondary;
+
+	.rc-collapse-item {
+
+		.rc-collapse-header {
+			outline: none;
+		}
+	}
+
+	.rc-collapse-content {
+		background-color: transparent;
+
+		.rc-collapse-content-box {
+			margin: 0;
+		}
+	}
+}

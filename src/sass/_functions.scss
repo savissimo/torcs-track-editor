@@ -1,0 +1,9 @@
+@import "_variables";
+
+@function subtle-3d-shadow($i_color: $color-shadow, $i_size: .25rem) {
+	@return #{$i_color} 0 #{$i_size/2} #{$i_size} #{$i_size/2};
+}
+
+@function glow($i_color: $color-glow, $i_size: .25rem) {
+	@return #{$i_color} 0 0 #{$i_size} #{$i_size/2};
+}
