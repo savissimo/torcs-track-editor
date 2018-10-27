@@ -55,7 +55,7 @@ const styles = theme => ({
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
     }),
-    marginTop: 72
+    paddingTop: 72
   },
   drawerPaperClose: {
     overflowX: 'hidden',
