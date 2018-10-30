@@ -6,4 +6,10 @@ const palette = {
 };
 const themeName = 'TrackEditor';
 
-export default createMuiTheme({palette, themeName});
+export default createMuiTheme({
+	palette, 
+	themeName,
+	typography: {
+		useNextVariants: true
+	}
+});

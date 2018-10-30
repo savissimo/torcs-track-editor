@@ -4,9 +4,10 @@ import { Toolbar, AppBar, Typography, CssBaseline, withStyles, Drawer, Button, M
 import Track from './classes/Track.js';
 import theme from './ui/theme/index.js';
 import TrackViewer from './components/TrackViewer.js';
+import MainTrackEditor from './components/MainTrackEditor.js';
 //import './stylesheets/style.css';
 
-const drawerWidth = 240;
+const drawerWidth = 300;
 
 const styles = theme => ({
   root: {
@@ -55,7 +56,8 @@ const styles = theme => ({
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
     }),
-    paddingTop: 72
+    paddingTop: 72,
+    maxHeight: '100vh'
   },
   drawerPaperClose: {
     overflowX: 'hidden',
@@ -85,7 +87,8 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      currentTrack: new Track()
+      currentTrack: new Track(),
+      selectedSegment: undefined
     };
   }
 
@@ -109,6 +112,10 @@ class App extends Component {
     this.setState({ currentTrack: track });
   };
 
+  selectSegment = (segment) => {
+    this.setState({ selectedSegment: segment });
+  };
+
   render() {
     const { classes } = this.props;
 
@@ -118,7 +125,7 @@ class App extends Component {
         <main className={classes.root}>
           <AppBar color="primary" position="absolute" className={classes.appBar}>
             <Toolbar className={classes.toolbar}>
-              <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
+              <Typography component="h1" variant="h5" color="inherit" noWrap className={classes.title}>
                 Track Editor - {this.state.currentTrack.header.name}
               </Typography>
               <input id="fileLoadFile" type="file" ref={(ref) => this.upload = ref} style={{ display: 'none' }} 
@@ -127,9 +134,13 @@ class App extends Component {
             </Toolbar>
           </AppBar>
           <Drawer variant="permanent" classes={{ paper: classes.drawerPaper }}>
-            {this.state.currentTrack.mainTrack.trackSegments.length} segments in the MainTrack
+            <MainTrackEditor mainTrack={this.state.currentTrack.mainTrack} selectedSegment={this.state.selectedSegment}
+              onSegmentSelected={segment => this.selectSegment(segment)}
+            />
           </Drawer>
-          <TrackViewer classes={classes} track={this.state.currentTrack}/>
+          <TrackViewer classes={classes} track={this.state.currentTrack} selectedSegment={this.state.selectedSegment}
+            onSegmentSelected={segment => this.selectSegment(segment)}
+          />
         </main>
       </MuiThemeProvider>
     );

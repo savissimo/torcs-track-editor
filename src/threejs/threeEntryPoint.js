@@ -31,8 +31,8 @@ export default containerElement => {
 		sceneManager.update();
 	}
 
-	function updateScene(i_track) {
-		sceneManager.updateScene(i_track);
+	function updateTrack(i_track) {
+		sceneManager.updateTrack(i_track);
 	}
 
 	function zoom(i_in) {
@@ -43,9 +43,14 @@ export default containerElement => {
 		sceneManager.moveCamera(i_xDelta, i_yDelta);
 	}
 
+	function pick(i_x, i_y) {
+		return sceneManager.pick(i_x, i_y);
+	}
+
 	return {
-		updateScene,
+		updateTrack,
 		zoom,
-		moveCamera
+		moveCamera,
+		pick
 	}
 }

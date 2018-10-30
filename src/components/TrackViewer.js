@@ -29,8 +29,10 @@ export default class TrackViewer extends Component {
 		return false;
 	}
 
-	componentDidUpdate() {
-		this.three.updateScene(this.props.track);
+	componentDidUpdate(prevProps) {
+		if (prevProps.track !== this.props.track) {
+			this.three.updateTrack(this.props.track);
+		}
 	}
 
 	mouseWheel(e) {
@@ -71,11 +73,17 @@ export default class TrackViewer extends Component {
 		}
 	}
 
+	click(e) {
+		let pickedSegment = this.three.pick(e.clientX - this.threeRootElement.offsetLeft, e.clientY - this.threeRootElement.offsetTop);
+		this.props.onSegmentSelected(pickedSegment);
+	}
+
 	render() {
 		return (
 			<div ref={element => this.threeRootElement = element} className={this.props.classes.content}
 				onWheel={(e) => this.mouseWheel(e)} 
 				onMouseDown={(e) => this.mouseDown(e)} onMouseUp={(e) => this.mouseUp(e)} onMouseMove={(e) => this.mouseMove(e)}
+				onClick={(e) => this.click(e)}
 			>
 			</div>
 		);

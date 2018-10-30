@@ -1,8 +1,10 @@
 import * as THREE from 'three'
 import Straight from '../classes/Straight';
 import Curve from '../classes/Curve';
+import Track from '../classes/Track';
+import Segment from '../classes/Segment';
 
-export default (i_track, i_scene) => {
+export default (i_track) => {
 	const trackSegmentMaterial = new THREE.MeshStandardMaterial({ color: "#000", transparent: false, side: THREE.DoubleSide });
 	
 	var segmentPosition = new THREE.Vector3(0, 0, 0);
@@ -17,9 +19,12 @@ export default (i_track, i_scene) => {
 		console.error(e);
 	});*/
 	
-	const trackGroup = buildObjects(i_track);
-		
-	i_scene.add(trackGroup);
+	if (i_track instanceof Track) {
+		return buildObjects(i_track);
+	}
+	else if (i_track instanceof Segment) {
+		return createSegmentObject(i_track, true);
+	}
 	
 	function buildObjects(i_track) {
 		let retval = new THREE.Group();
@@ -29,18 +34,20 @@ export default (i_track, i_scene) => {
 	
 	function buildMainTrackObjects(i_mainTrack) {
 		let retval = new THREE.Group();
-		i_mainTrack.trackSegments.forEach(segment => {
-			if (segment instanceof Straight) {
-				retval.add(createStraightObject(segment));
-			}
-			else if (segment instanceof Curve) {
-				retval.add(createCurveObject(segment));
-			}
-		});
+		i_mainTrack.trackSegments.forEach(segment => retval.add(createSegmentObject(segment)));
 		return retval;
 	}
+
+	function createSegmentObject(segment, i_highlight) {
+		if (segment instanceof Straight) {
+			return createStraightObject(segment, i_highlight);
+		}
+		else if (segment instanceof Curve) {
+			return createCurveObject(segment, i_highlight);
+		}
+	}
 	
-	function createStraightObject(i_straightSegment) {
+	function createStraightObject(i_straightSegment, i_highlight) {
 		let retval = new THREE.Group();
 
 		let mainAxis = new THREE.Vector3(i_straightSegment.length, 0, 0);
@@ -57,18 +64,28 @@ export default (i_track, i_scene) => {
 		segmentPosition.copy(segmentPosition.add(rotatedMainAxis));
 		segmentAngleAroundZ += 0;
 
-		retval.add(new THREE.Mesh(geometry, trackSegmentMaterial));
-		retval.add(new THREE.LineSegments(
-			new THREE.EdgesGeometry(geometry),
-			new THREE.LineBasicMaterial({ color: 0xff0000 })
-		));
+		
+		if (i_highlight) {
+			retval.add(new THREE.LineSegments(
+				new THREE.EdgesGeometry(geometry),
+				new THREE.LineBasicMaterial({ color: 0xdd6600, linewidth: 5 })
+				));
+		}
+		else {
+			retval.add(new THREE.Mesh(geometry, trackSegmentMaterial));
+			retval.add(new THREE.LineSegments(
+				new THREE.EdgesGeometry(geometry),
+				new THREE.LineBasicMaterial({ color: 0xff00ff })
+			));
+		}
 
 		//retval.add(createText(i_straightSegment.name, findCenterPoint(geometry)));
 
+		retval.userData = i_straightSegment;
 		return retval;
 	}
 	
-	function createCurveObject(i_curveSegment) {
+	function createCurveObject(i_curveSegment, i_highlight) {
 		let retval = new THREE.Group();
 		
 		let totalArc = i_curveSegment.arc * (i_curveSegment.isRight ? -1 : 1) * Math.PI/180;
@@ -112,11 +129,18 @@ export default (i_track, i_scene) => {
 			mesh.updateMatrix();
 			mergedGeometry.merge(mesh.geometry, mesh.matrix);
 		});
-		retval.add(new THREE.Mesh(mergedGeometry, trackSegmentMaterial));
-
+		
 		let mergedEdgeGeometry = new THREE.EdgesGeometry(mergedGeometry);
-		retval.add(new THREE.LineSegments(mergedEdgeGeometry, new THREE.LineBasicMaterial({ color: 0x0000ff })));
+		
+		if (i_highlight) {
+			retval.add(new THREE.LineSegments(mergedEdgeGeometry, new THREE.LineBasicMaterial({ color: 0xdd6600, linewidth: 5 })));
+		}
+		else {
+			retval.add(new THREE.Mesh(mergedGeometry, trackSegmentMaterial));
+			retval.add(new THREE.LineSegments(mergedEdgeGeometry, new THREE.LineBasicMaterial({ color: 0x0000ff })));
+		}
 
+		retval.userData = i_curveSegment;
 		return retval;
 	}
 
@@ -145,12 +169,4 @@ export default (i_track, i_scene) => {
 
 		return retval;
 	}*/
-
-    function update(time) {
-    }
-
-    return {
-        update
-    }
-
 }
