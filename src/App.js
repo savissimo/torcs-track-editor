@@ -90,6 +90,9 @@ class App extends Component {
   }
 
   openTrackFile = (i_filePath) => {
+    if (i_filePath === undefined){
+      return;
+    }
     let fileReader = new FileReader();
     var self = this;
     fileReader.onload = (e) => {

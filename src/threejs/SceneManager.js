@@ -66,7 +66,8 @@ export default canvas => {
     }
 
     function updateScene(i_track) {
-        scene.remove(this.sceneSubjects);
+        scene.traverse(obj => scene.remove(obj));
+
         this.sceneSubjects = [
             lights,
             new TrackObjects(i_track, scene)

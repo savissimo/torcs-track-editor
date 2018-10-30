@@ -17,14 +17,8 @@ export default (i_track, i_scene) => {
 		console.error(e);
 	});*/
 	
-    /*const subjectWireframe = new THREE.LineSegments(
-		new THREE.EdgesGeometry(subjectGeometry),
-        new THREE.LineBasicMaterial()
-		);*/
-		
 	const trackGroup = buildObjects(i_track);
 		
-    //group.add(subjectWireframe);
 	i_scene.add(trackGroup);
 	
 	function buildObjects(i_track) {
@@ -77,13 +71,12 @@ export default (i_track, i_scene) => {
 	function createCurveObject(i_curveSegment) {
 		let retval = new THREE.Group();
 		
-		//let stepsCount = 5;
 		let totalArc = i_curveSegment.arc * (i_curveSegment.isRight ? -1 : 1) * Math.PI/180;
+		let geometries = [];
+		let edgeGeometries = [];
 		
 		for (let p = 0; p < 2; ++p) {
 			let partArc = totalArc / 2;
-			let startTheta = i_curveSegment.isRight ? 0 : Math.PI*2 - partArc;
-			let endTheta = i_curveSegment.isRight ? partArc : 0;
 			let radius = p === 0 ? i_curveSegment.startRadius : i_curveSegment.endRadius;
 			let innerRadius = radius - i_curveSegment.startWidth / 2;
 			let outerRadius = radius + i_curveSegment.startWidth / 2;
@@ -94,9 +87,6 @@ export default (i_track, i_scene) => {
 				);
 				
 			partGeometry.rotateZ(segmentAngleAroundZ + (i_curveSegment.isRight ? Math.PI/2 : - Math.PI/2));
-			/*if (!i_curveSegment.isRight) {
-				partGeometry.rotateZ(Math.PI*2 - totalArc);
-			}*/
 			
 			let centerPosition = new THREE.Vector3(0, radius * (i_curveSegment.isRight ? -1 : 1), 0);
 			centerPosition.copy(centerPosition.applyAxisAngle(axisZ, segmentAngleAroundZ));
@@ -112,12 +102,20 @@ export default (i_track, i_scene) => {
 			segmentPosition.copy(segmentPosition.add(positionDelta));
 			segmentAngleAroundZ += partArc;
 			
-			retval.add(new THREE.Mesh(partGeometry, trackSegmentMaterial));
-			retval.add(new THREE.LineSegments(
-				new THREE.EdgesGeometry(partGeometry),
-				new THREE.LineBasicMaterial({ color: (p === 0 ? 0x0000ff : 0x0066ff) })
-			));
-			}
+			geometries.push(partGeometry);
+			edgeGeometries.push(new THREE.EdgesGeometry(partGeometry));
+		}
+
+		let mergedGeometry = new THREE.Geometry();
+		geometries.forEach(g => {
+			let mesh = new THREE.Mesh(g);
+			mesh.updateMatrix();
+			mergedGeometry.merge(mesh.geometry, mesh.matrix);
+		});
+		retval.add(new THREE.Mesh(mergedGeometry, trackSegmentMaterial));
+
+		let mergedEdgeGeometry = new THREE.EdgesGeometry(mergedGeometry);
+		retval.add(new THREE.LineSegments(mergedEdgeGeometry, new THREE.LineBasicMaterial({ color: 0x0000ff })));
 
 		return retval;
 	}
@@ -149,10 +147,6 @@ export default (i_track, i_scene) => {
 	}*/
 
     function update(time) {
-        //subjectWireframe.material.color.setHSL( Math.sin(angle*2), 0.5, 0.5 );
-        
-        //const scale = (Math.sin(angle*8)+6.4)/5;
-        //subjectWireframe.scale.set(scale, scale, scale)
     }
 
     return {
