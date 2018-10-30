@@ -48,7 +48,7 @@ export default class MainTrack {
 					segment.isRight = type === 'rgt';
 					segment.arc = TORCSUtils.getNumericAttribute(tsNode, 'arc');
 					segment.startRadius = TORCSUtils.getNumericAttribute(tsNode, 'radius');
-					segment.endRadius = TORCSUtils.getNumericAttribute(tsNode, 'end radius');
+					segment.endRadius = TORCSUtils.getNumericAttribute(tsNode, 'end radius') || segment.startRadius;
 					break;
 				default:
 					break;
