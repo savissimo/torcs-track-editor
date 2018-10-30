@@ -1,3 +1,5 @@
+import TORCSUtils from "./TORCSUtils";
+
 export default class TrackHeader {
 	name = 'Track';
 	category = 'road';
@@ -6,10 +8,10 @@ export default class TrackHeader {
 	description = '';
 
 	loadTORCSXml(i_xmlNode) {
-		this.name = i_xmlNode.querySelector('attstr[name="name"]').getAttribute('val');
-		this.category = i_xmlNode.querySelector('attstr[name="category"]').getAttribute('val');
-		this.version = i_xmlNode.querySelector('attnum[name="version"]').getAttribute('val');
-		this.author = i_xmlNode.querySelector('attstr[name="author"]').getAttribute('val');
-		this.description = i_xmlNode.querySelector('attstr[name="description"]').getAttribute('val');
+		this.name = TORCSUtils.getStringAttribute(i_xmlNode, 'name');
+		this.category = TORCSUtils.getStringAttribute(i_xmlNode, 'category');
+		this.version = TORCSUtils.getNumericAttribute(i_xmlNode, 'version');
+		this.author = TORCSUtils.getStringAttribute(i_xmlNode, 'author');
+		this.description = TORCSUtils.getStringAttribute(i_xmlNode, 'description');
 	}
 }

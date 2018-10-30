@@ -30,4 +30,22 @@ export default containerElement => {
 		requestAnimationFrame(render);
 		sceneManager.update();
 	}
+
+	function updateScene(i_track) {
+		sceneManager.updateScene(i_track);
+	}
+
+	function zoom(i_in) {
+		sceneManager.zoom(i_in);
+	}
+
+	function moveCamera(i_xDelta, i_yDelta) {
+		sceneManager.moveCamera(i_xDelta, i_yDelta);
+	}
+
+	return {
+		updateScene,
+		zoom,
+		moveCamera
+	}
 }

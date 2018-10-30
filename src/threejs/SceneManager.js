@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import SceneSubject from './SceneSubject';
 import GeneralLights from './GeneralLights';
+import TrackObjects from './TrackObjects';
 
 export default canvas => {
 
@@ -18,6 +19,7 @@ export default canvas => {
     }
 
     const scene = buildScene();
+    const lights = new GeneralLights(scene);
     const renderer = buildRender(screenDimensions);
     const camera = buildCamera(screenDimensions);
     const sceneSubjects = createSceneSubjects(scene);
@@ -43,23 +45,32 @@ export default canvas => {
 
     function buildCamera({ width, height }) {
         const aspectRatio = width / height;
-        const fieldOfView = 60;
-        const nearPlane = 4;
-        const farPlane = 100; 
-        const camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
+        //const fieldOfView = 60;
+        //const nearPlane = 4;
+        //const farPlane = 100; 
+        //const camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
+        let viewRange = 200;
+        const camera = new THREE.OrthographicCamera(-viewRange, viewRange, viewRange/aspectRatio, -viewRange/aspectRatio, -10, 10);
 
-        camera.position.z = 40;
+        //camera.position.z = 15;
 
         return camera;
     }
 
     function createSceneSubjects(scene) {
         const sceneSubjects = [
-            new GeneralLights(scene),
-            new SceneSubject(scene)
+            lights
         ];
 
         return sceneSubjects;
+    }
+
+    function updateScene(i_track) {
+        scene.remove(this.sceneSubjects);
+        this.sceneSubjects = [
+            lights,
+            new TrackObjects(i_track, scene)
+        ];
     }
 
     function update() {
@@ -68,15 +79,9 @@ export default canvas => {
         for(let i=0; i<sceneSubjects.length; i++)
             sceneSubjects[i].update(elapsedTime);
 
-        updateCameraPositionRelativeToMouse();
+        //updateCameraPositionRelativeToMouse();
 
         renderer.render(scene, camera);
-    }
-
-    function updateCameraPositionRelativeToMouse() {
-        camera.position.x += (  (mousePosition.x * 0.01) - camera.position.x ) * 0.01;
-        camera.position.y += ( -(mousePosition.y * 0.01) - camera.position.y ) * 0.01;
-        camera.lookAt(origin);
     }
 
     function onWindowResize() {
@@ -96,9 +101,27 @@ export default canvas => {
         mousePosition.y = y;
     }
 
+    function zoom(i_in) {
+        const delta = 1.2;
+        camera.zoom *= i_in ? 1/delta : delta;
+        camera.updateProjectionMatrix();
+    }
+
+    function moveCamera(i_xDelta, i_yDelta) {
+        let factor = 20 / 7;
+        camera.top += i_yDelta / factor / camera.zoom;
+        camera.bottom += i_yDelta / factor / camera.zoom;
+        camera.left -= i_xDelta / factor / camera.zoom;
+        camera.right -= i_xDelta / factor / camera.zoom;
+        camera.updateProjectionMatrix();
+    }
+
     return {
         update,
         onWindowResize,
-        onMouseMove
+        onMouseMove,
+        updateScene,
+        zoom,
+        moveCamera
     }
 }
