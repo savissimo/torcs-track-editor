@@ -47,10 +47,20 @@ export default containerElement => {
 		return sceneManager.pick(i_x, i_y);
 	}
 
+	function setPerspectiveCamera() {
+		sceneManager.setPerspectiveCamera();
+	}
+
+	function setOrthogonalCamera() {
+		sceneManager.setOrthogonalCamera();
+	}
+
 	return {
 		updateTrack,
 		zoom,
 		moveCamera,
-		pick
+		pick,
+		setPerspectiveCamera,
+		setOrthogonalCamera
 	}
 }

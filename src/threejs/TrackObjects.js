@@ -4,8 +4,9 @@ import Curve from '../classes/Curve';
 import Track from '../classes/Track';
 import Segment from '../classes/Segment';
 
-export default (i_track) => {
-	const trackSegmentMaterial = new THREE.MeshStandardMaterial({ color: "#000", transparent: false, side: THREE.DoubleSide });
+export default (i_track, i_segmentToHighlight) => {
+	const trackSegmentMaterial = new THREE.MeshStandardMaterial({ color: "#333", transparent: false, side: THREE.DoubleSide });
+	const trackSegmentHighlightMaterial = new THREE.MeshStandardMaterial({ color: "#ff8", transparent: true, opacity: .9, side: THREE.DoubleSide });
 	
 	var segmentPosition = new THREE.Vector3(0, 0, 0);
 	var segmentAngleAroundZ = 0;
@@ -20,21 +21,21 @@ export default (i_track) => {
 	});*/
 	
 	if (i_track instanceof Track) {
-		return buildObjects(i_track);
+		return buildObjects(i_track, i_segmentToHighlight);
 	}
-	else if (i_track instanceof Segment) {
+	/*else if (i_track instanceof Segment) {
 		return createSegmentObject(i_track, true);
-	}
+	}*/
 	
-	function buildObjects(i_track) {
+	function buildObjects(i_track, i_segmentToHighlight) {
 		let retval = new THREE.Group();
-		retval.add(buildMainTrackObjects(i_track.mainTrack));
+		retval.add(buildMainTrackObjects(i_track.mainTrack, i_segmentToHighlight));
 		return retval;
 	}
 	
-	function buildMainTrackObjects(i_mainTrack) {
+	function buildMainTrackObjects(i_mainTrack, i_segmentToHighlight) {
 		let retval = new THREE.Group();
-		i_mainTrack.trackSegments.forEach(segment => retval.add(createSegmentObject(segment)));
+		i_mainTrack.trackSegments.forEach(segment => retval.add(createSegmentObject(segment, segment === i_segmentToHighlight)));
 		return retval;
 	}
 
@@ -64,19 +65,18 @@ export default (i_track) => {
 		segmentPosition.copy(segmentPosition.add(rotatedMainAxis));
 		segmentAngleAroundZ += 0;
 
-		
+		retval.add(new THREE.Mesh(geometry, trackSegmentMaterial));
+		retval.add(new THREE.LineSegments(
+			new THREE.EdgesGeometry(geometry),
+			new THREE.LineBasicMaterial({ color: 0xff00ff })
+			));
+
 		if (i_highlight) {
+			retval.add(new THREE.Mesh(geometry, trackSegmentHighlightMaterial));
 			retval.add(new THREE.LineSegments(
 				new THREE.EdgesGeometry(geometry),
 				new THREE.LineBasicMaterial({ color: 0xdd6600, linewidth: 5 })
 				));
-		}
-		else {
-			retval.add(new THREE.Mesh(geometry, trackSegmentMaterial));
-			retval.add(new THREE.LineSegments(
-				new THREE.EdgesGeometry(geometry),
-				new THREE.LineBasicMaterial({ color: 0xff00ff })
-			));
 		}
 
 		//retval.add(createText(i_straightSegment.name, findCenterPoint(geometry)));
@@ -132,12 +132,16 @@ export default (i_track) => {
 		
 		let mergedEdgeGeometry = new THREE.EdgesGeometry(mergedGeometry);
 		
+		let mesh = new THREE.Mesh(mergedGeometry, trackSegmentMaterial);
+		retval.add(mesh);
+		retval.add(new THREE.LineSegments(mergedEdgeGeometry, new THREE.LineBasicMaterial({ color: 0x4400ff })));
+
+        var vnh = new THREE.VertexNormalsHelper( mesh, 10, 0x00ff00, 10 );
+        retval.add( vnh );
+		
 		if (i_highlight) {
+			retval.add(new THREE.Mesh(mergedGeometry, trackSegmentHighlightMaterial));
 			retval.add(new THREE.LineSegments(mergedEdgeGeometry, new THREE.LineBasicMaterial({ color: 0xdd6600, linewidth: 5 })));
-		}
-		else {
-			retval.add(new THREE.Mesh(mergedGeometry, trackSegmentMaterial));
-			retval.add(new THREE.LineSegments(mergedEdgeGeometry, new THREE.LineBasicMaterial({ color: 0x0000ff })));
 		}
 
 		retval.userData = i_curveSegment;

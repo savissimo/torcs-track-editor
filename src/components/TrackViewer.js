@@ -6,8 +6,10 @@ export default class TrackViewer extends Component {
 		super(props);
 		this.state = { 
 			//track: props.track,
+			perspective: true,
 			mouseLeftDown: false,
 			mouseLeftDragging: false,
+			mouseLeftJustDragged: false,
 			mouseLeftDownLastPositionX: undefined,
 			mouseLeftDownLastPositionY: undefined
 		};
@@ -22,6 +24,10 @@ export default class TrackViewer extends Component {
 			return true;
 		}
 
+		if (nextState.perspective !== this.state.perspective) {
+			return true;
+		}
+
 		if (!nextProps.mouseLeftDragging && nextProps.mouseLeftDragging === this.state.mouseLeftDragging) {
 			return false;
 		}
@@ -29,9 +35,13 @@ export default class TrackViewer extends Component {
 		return false;
 	}
 
-	componentDidUpdate(prevProps) {
+	componentDidUpdate(prevProps, prevState) {
 		if (prevProps.track !== this.props.track) {
 			this.three.updateTrack(this.props.track);
+		}
+
+		if (prevState.perspective !== this.state.perspective) {
+			this.state.perspective ? this.three.setPerspectiveCamera() : this.three.setOrthogonalCamera();
 		}
 	}
 
@@ -42,7 +52,7 @@ export default class TrackViewer extends Component {
 	mouseDown(e) {
 		if (e.button === 0)
 		{
-			this.setState({ mouseLeftDown: true, mouseLeftDragging: false, 
+			this.setState({ mouseLeftDown: true, mouseLeftDragging: false, mouseLeftJustDragged: false,
 				mouseLeftDownLastPositionX: e.screenX, mouseLeftDownLastPositionY: e.screenY });
 		}
 	}
@@ -50,7 +60,7 @@ export default class TrackViewer extends Component {
 	mouseUp(e) {
 		if (e.button === 0)
 		{
-			this.setState({ mouseLeftDown: false, mouseLeftDragging: false, 
+			this.setState({ mouseLeftDown: false, mouseLeftJustDragged: this.state.mouseLeftDragging, mouseLeftDragging: false, 
 				mouseLeftDownLastPositionX: undefined, mouseLeftDownLastPositionY: undefined });
 		}
 	}
@@ -74,8 +84,36 @@ export default class TrackViewer extends Component {
 	}
 
 	click(e) {
-		let pickedSegment = this.three.pick(e.clientX - this.threeRootElement.offsetLeft, e.clientY - this.threeRootElement.offsetTop);
-		this.props.onSegmentSelected(pickedSegment);
+		if (e.button === 0) {
+			if (this.state.mouseLeftJustDragged) {
+				this.setState({ mouseLeftJustDragged: false });
+				return;
+			}
+
+			let pickedSegment = this.three.pick(e.clientX - this.threeRootElement.offsetLeft, e.clientY - this.threeRootElement.offsetTop);
+			this.props.onSegmentSelected(pickedSegment);
+		}
+	}
+
+	keyDown(e) {
+		switch (e.key) {
+		case 'o':
+			this.setOrthographicView();
+			break;
+		case 'p':
+			this.setPerspectiveView();
+			break;
+		default:
+			break;
+		}
+	}
+	
+	setOrthographicView() {
+		this.setState({perspective: false});
+	}
+
+	setPerspectiveView() {
+		this.setState({perspective: true});
 	}
 
 	render() {
@@ -83,6 +121,7 @@ export default class TrackViewer extends Component {
 			<div ref={element => this.threeRootElement = element} className={this.props.classes.content}
 				onWheel={(e) => this.mouseWheel(e)} 
 				onMouseDown={(e) => this.mouseDown(e)} onMouseUp={(e) => this.mouseUp(e)} onMouseMove={(e) => this.mouseMove(e)}
+				tabIndex={0} onKeyDown={(e) => this.keyDown(e)}
 				onClick={(e) => this.click(e)}
 			>
 			</div>
