@@ -16,4 +16,14 @@ export default class Track {
 	setDirty() {
 		this.isDirty = true;
 	}
+
+	getSegmentIndex(i_segment) {
+		for (let i = 0; i < this.mainTrack.trackSegments.length; ++i) {
+			let segment = this.mainTrack.trackSegments[i];
+			if (segment === i_segment) {
+				return i;
+			}
+		}
+		return undefined;
+	}
 }

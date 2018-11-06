@@ -1,14 +1,13 @@
-import * as THREE from 'three'
+import * as THREE from 'three';
 import Straight from '../classes/Straight';
 import Curve from '../classes/Curve';
 import Track from '../classes/Track';
+import Segment from '../classes/Segment';
 
 export default (i_track, i_segmentToHighlight) => {
 	const trackSegmentMaterial = new THREE.MeshStandardMaterial({ color: "#333", transparent: false, side: THREE.DoubleSide });
 	const trackSegmentHighlightMaterial = new THREE.MeshStandardMaterial({ color: "#ff8", transparent: true, opacity: .9, side: THREE.DoubleSide });
 	
-	var segmentPosition = new THREE.Vector3(0, 0, 0);
-	var segmentAngleAroundZ = 0;
 	const axisZ = new THREE.Vector3(0, 0, 1);
 
 	/*const loader = new THREE.FontLoader();
@@ -49,20 +48,14 @@ export default (i_track, i_segmentToHighlight) => {
 	
 	function createStraightObject(i_straightSegment, i_highlight) {
 		let retval = new THREE.Group();
+		let segmentStart = computeStartOfSegment(i_track, i_straightSegment);
+		let displacement = i_straightSegment.computeDisplacement(segmentStart.position, segmentStart.rotation);
 
-		let mainAxis = new THREE.Vector3(i_straightSegment.length, 0, 0);
-		let rotatedMainAxis = new THREE.Vector3();
-		rotatedMainAxis.copy(mainAxis);
-		rotatedMainAxis.applyAxisAngle(axisZ, segmentAngleAroundZ);
-
-		let geometry = new THREE.PlaneGeometry(i_straightSegment.startWidth, mainAxis.x, 1, 1);
-		geometry.rotateZ(segmentAngleAroundZ + Math.PI/2);
-		geometry.translate(segmentPosition.x + rotatedMainAxis.x/2, 
-			segmentPosition.y + rotatedMainAxis.y/2, 
-			segmentPosition.z + rotatedMainAxis.z/2);
-
-		segmentPosition.copy(segmentPosition.add(rotatedMainAxis));
-		segmentAngleAroundZ += 0;
+		let geometry = new THREE.PlaneGeometry(i_straightSegment.startWidth, i_straightSegment.length, 1, 1);
+		geometry.rotateZ(segmentStart.rotation + Math.PI/2);
+		geometry.translate(segmentStart.position.x + displacement.position.x/2, 
+			segmentStart.position.y + displacement.position.y/2, 
+			segmentStart.position.z + displacement.position.z/2);
 
 		retval.add(new THREE.Mesh(geometry, trackSegmentMaterial));
 		retval.add(new THREE.LineSegments(
@@ -86,13 +79,16 @@ export default (i_track, i_segmentToHighlight) => {
 	
 	function createCurveObject(i_curveSegment, i_highlight) {
 		let retval = new THREE.Group();
+		let segmentStart = computeStartOfSegment(i_track, i_curveSegment);
+		//let displacement = i_curveSegment.computeDisplacement(segmentStart.position, segmentStart.rotation);
 		
-		let totalArc = i_curveSegment.arc * (i_curveSegment.isRight ? -1 : 1) * Math.PI/180;
 		let geometries = [];
 		let edgeGeometries = [];
 		
 		for (let p = 0; p < 2; ++p) {
-			let partArc = totalArc / 2;
+			let partDisplacement = i_curveSegment.computePartDisplacement(p, segmentStart.position, segmentStart.rotation);
+			let partArc = partDisplacement.rotation;
+			
 			let radius = p === 0 ? i_curveSegment.startRadius : i_curveSegment.endRadius;
 			let innerRadius = radius - i_curveSegment.startWidth / 2;
 			let outerRadius = radius + i_curveSegment.startWidth / 2;
@@ -102,22 +98,16 @@ export default (i_track, i_segmentToHighlight) => {
 				8, 1, 0, partArc
 				);
 				
-			partGeometry.rotateZ(segmentAngleAroundZ + (i_curveSegment.isRight ? Math.PI/2 : - Math.PI/2));
+			partGeometry.rotateZ(segmentStart.rotation + (i_curveSegment.isRight ? Math.PI/2 : - Math.PI/2));
 			
 			let centerPosition = new THREE.Vector3(0, radius * (i_curveSegment.isRight ? -1 : 1), 0);
-			centerPosition.copy(centerPosition.applyAxisAngle(axisZ, segmentAngleAroundZ));
-			centerPosition.copy(centerPosition.add(segmentPosition));
+			centerPosition.copy(centerPosition.applyAxisAngle(axisZ, segmentStart.rotation));
+			centerPosition.copy(centerPosition.add(segmentStart.position));
 			partGeometry.translate(centerPosition.x, centerPosition.y, centerPosition.z);
-			
-			let initialPosition = new THREE.Vector3(0, -radius * (i_curveSegment.isRight ? -1 : 1), 0);
-			let positionDelta = new THREE.Vector3();
-			initialPosition.applyAxisAngle(axisZ, segmentAngleAroundZ);
-			positionDelta.copy(initialPosition);
-			positionDelta.copy(positionDelta.applyAxisAngle(axisZ, partArc));
-			positionDelta.copy(positionDelta.sub(initialPosition));
-			segmentPosition.copy(segmentPosition.add(positionDelta));
-			segmentAngleAroundZ += partArc;
-			
+
+			segmentStart.position.addVectors(segmentStart.position, partDisplacement.position);
+			segmentStart.rotation += partDisplacement.rotation;
+						
 			geometries.push(partGeometry);
 			edgeGeometries.push(new THREE.EdgesGeometry(partGeometry));
 		}
@@ -145,6 +135,45 @@ export default (i_track, i_segmentToHighlight) => {
 
 		retval.userData = i_curveSegment;
 		return retval;
+	}
+
+	function computeEndOfSegment(i_track, i_segment) {
+		if (!(i_track instanceof Track) || !(i_segment instanceof Segment || Number.isInteger(i_segment))) { return undefined; }
+
+		if (i_segment instanceof Segment) {
+			let segmentIndex = i_track.getSegmentIndex(i_segment);
+			if (segmentIndex !== undefined) {
+				return computeEndOfSegment(i_track, segmentIndex);
+			}
+			return undefined;
+		}
+
+		let segmentPosition = new THREE.Vector3(0, 0, 0);
+		let segmentAngleAroundZ = 0;
+
+		for (let i = 0; i < i_track.mainTrack.trackSegments.length && i <= i_segment; ++i) {
+			let segment = i_track.mainTrack.trackSegments[i];
+
+			let { position, rotation } = segment.computeDisplacement(segmentPosition, segmentAngleAroundZ);
+			segmentPosition.addVectors(segmentPosition, position);
+			segmentAngleAroundZ += rotation;
+		}
+
+		return { position: segmentPosition, rotation: segmentAngleAroundZ };
+	}
+
+	function computeStartOfSegment(i_track, i_segment) {
+		if (!(i_track instanceof Track) || !(i_segment instanceof Segment || Number.isInteger(i_segment))) { return undefined; }
+
+		if (i_segment instanceof Segment) {
+			let segmentIndex = i_track.getSegmentIndex(i_segment);
+			if (segmentIndex !== undefined) {
+				return computeEndOfSegment(i_track, segmentIndex - 1);
+			}
+			return undefined;
+		}
+
+		return computeEndOfSegment(i_track, i_segment - 1);
 	}
 
 	/*function createText(i_text, i_position) {
