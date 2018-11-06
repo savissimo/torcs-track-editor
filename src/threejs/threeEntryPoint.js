@@ -39,8 +39,8 @@ export default containerElement => {
 		sceneManager.zoom(i_in);
 	}
 
-	function moveCamera(i_xDelta, i_yDelta) {
-		sceneManager.moveCamera(i_xDelta, i_yDelta);
+	function moveCamera(i_xDelta, i_yDelta, i_buttons, i_shiftKey) {
+		sceneManager.moveCamera(i_xDelta, i_yDelta, i_buttons, i_shiftKey);
 	}
 
 	function pick(i_x, i_y) {

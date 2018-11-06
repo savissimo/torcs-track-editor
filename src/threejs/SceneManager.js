@@ -33,6 +33,8 @@ export default canvas => {
     
     const [ orthogonalCamera, perspectiveCamera ] = buildCameras(screenDimensions);
     var camera = orthogonalCamera;
+    var cameraPerspectiveLookAt = undefined;
+    //setPerspectiveLookAt(new THREE.Vector3(0, 0, 0));
     
     function buildScene() {
         const scene = new THREE.Scene();
@@ -58,11 +60,16 @@ export default canvas => {
         let viewRange = 200;
         const orthogonalCamera = new THREE.OrthographicCamera(-viewRange, viewRange, viewRange/aspectRatio, -viewRange/aspectRatio, 10, -10);
 
-        const fieldOfView = 60;
+        const fieldOfView = 40;
         const nearPlane = 4;
         const farPlane = 1000; 
         const perspectiveCamera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
         perspectiveCamera.position.set(0, 0, 50);
+
+        // DEV
+        perspectiveCamera.position.set(450, -160, 45);
+        perspectiveCamera.rotation.set(1.0918, 0.7178, 0.2293);
+        perspectiveCamera.updateProjectionMatrix();
 
         return [ orthogonalCamera, perspectiveCamera ];
     }
@@ -135,12 +142,16 @@ export default canvas => {
     function zoom(i_in) {
         if (camera === orthogonalCamera) {
             const delta = 1.2;
-            camera.zoom *= i_in ? 1/delta : delta;
+            camera.zoom *= i_in ? delta : 1/delta;
+            camera.updateProjectionMatrix();
+        }
+        else if (camera === perspectiveCamera) {
+            camera.translateOnAxis(new THREE.Vector3(0, 0, 1), 8 * (i_in ? -1 : 1));
             camera.updateProjectionMatrix();
         }
     }
 
-    function moveCamera(i_xDelta, i_yDelta) {
+    function moveCamera(i_xDelta, i_yDelta, i_buttons, i_shiftKey) {
         if (camera === orthogonalCamera) {
             let factor = 20 / 7;
             camera.top += i_yDelta / factor / camera.zoom;
@@ -149,6 +160,35 @@ export default canvas => {
             camera.right -= i_xDelta / factor / camera.zoom;
             camera.updateProjectionMatrix();
         }
+        else if (camera === perspectiveCamera) {
+            const leftButton = 1;
+            //const rightButton = 2;
+            if (i_buttons & leftButton) {
+                let delta = new THREE.Vector3(-i_xDelta, i_yDelta, 0);
+                let quaternion = new THREE.Quaternion();
+                camera.getWorldQuaternion(quaternion);
+                let adjustedDelta = new THREE.Vector3();
+                adjustedDelta.copy(delta);
+                adjustedDelta.applyQuaternion(quaternion);
+                if (i_shiftKey) {
+                    camera.up = new THREE.Vector3(0, 0, 1);
+                    camera.translateOnAxis(new THREE.Vector3(1, 0, 0), delta.x * camera.zoom);
+                    camera.translateOnAxis(new THREE.Vector3(0, 1, 0), delta.y * camera.zoom);
+                }
+                else {
+                    camera.up = new THREE.Vector3(0, 0, 1);
+                    camera.rotateOnAxis(new THREE.Vector3(1, 0, 0), -delta.y * Math.PI/180 * camera.zoom / 4);
+                    camera.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -delta.x * Math.PI/180 * camera.zoom / 8);
+                }
+                camera.updateProjectionMatrix();
+            }
+        }
+    }
+
+    function setPerspectiveLookAt(i_lookAt) {
+        cameraPerspectiveLookAt = i_lookAt;
+        perspectiveCamera.up = new THREE.Vector3(0, 0.1, 1);
+        perspectiveCamera.lookAt(cameraPerspectiveLookAt);
     }
 
     function pick(i_x, i_y) {

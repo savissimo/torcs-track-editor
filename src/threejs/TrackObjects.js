@@ -2,7 +2,6 @@ import * as THREE from 'three'
 import Straight from '../classes/Straight';
 import Curve from '../classes/Curve';
 import Track from '../classes/Track';
-import Segment from '../classes/Segment';
 
 export default (i_track, i_segmentToHighlight) => {
 	const trackSegmentMaterial = new THREE.MeshStandardMaterial({ color: "#333", transparent: false, side: THREE.DoubleSide });
@@ -56,8 +55,8 @@ export default (i_track, i_segmentToHighlight) => {
 		rotatedMainAxis.copy(mainAxis);
 		rotatedMainAxis.applyAxisAngle(axisZ, segmentAngleAroundZ);
 
-		let geometry = new THREE.BoxGeometry(mainAxis.x, i_straightSegment.startWidth, 1);
-		geometry.rotateZ(segmentAngleAroundZ);
+		let geometry = new THREE.PlaneGeometry(i_straightSegment.startWidth, mainAxis.x, 1, 1);
+		geometry.rotateZ(segmentAngleAroundZ + Math.PI/2);
 		geometry.translate(segmentPosition.x + rotatedMainAxis.x/2, 
 			segmentPosition.y + rotatedMainAxis.y/2, 
 			segmentPosition.z + rotatedMainAxis.z/2);
@@ -136,8 +135,8 @@ export default (i_track, i_segmentToHighlight) => {
 		retval.add(mesh);
 		retval.add(new THREE.LineSegments(mergedEdgeGeometry, new THREE.LineBasicMaterial({ color: 0x4400ff })));
 
-        var vnh = new THREE.VertexNormalsHelper( mesh, 10, 0x00ff00, 10 );
-        retval.add( vnh );
+        //var vnh = new THREE.VertexNormalsHelper( mesh, 10, 0x00ff00, 10 );
+        //retval.add( vnh );
 		
 		if (i_highlight) {
 			retval.add(new THREE.Mesh(mergedGeometry, trackSegmentHighlightMaterial));

@@ -17,6 +17,9 @@ export default class TrackViewer extends Component {
 
 	componentDidMount() {
 		this.three = threeEntryPoint(this.threeRootElement);
+		this.state.perspective 
+			? this.three.setPerspectiveCamera()
+			: this.three.setOrthogonalCamera();
 	}
 
 	shouldComponentUpdate(nextProps, nextState) {
@@ -46,7 +49,7 @@ export default class TrackViewer extends Component {
 	}
 
 	mouseWheel(e) {
-		this.three.zoom(e.deltaY > 0);
+		this.three.zoom(e.deltaY < 0);
 	}
 
 	mouseDown(e) {
@@ -78,7 +81,7 @@ export default class TrackViewer extends Component {
 			}
 
 			if (this.state.mouseLeftDragging) {
-				this.three.moveCamera(xDistance, yDistance);
+				this.three.moveCamera(xDistance, yDistance, e.buttons, e.shiftKey);
 			}
 		}
 	}
