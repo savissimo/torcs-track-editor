@@ -6,7 +6,9 @@ import Segment from '../classes/Segment';
 
 export default (i_track, i_segmentToHighlight) => {
 	const trackSegmentMaterial = new THREE.MeshStandardMaterial({ color: "#333", transparent: false, side: THREE.DoubleSide });
-	const trackSegmentHighlightMaterial = new THREE.MeshStandardMaterial({ color: "#ff8", transparent: true, opacity: .9, side: THREE.DoubleSide });
+	const trackSegmentHighlightMaterial = new THREE.MeshBasicMaterial({ color: "#bb0", transparent: true, opacity: .5, side: THREE.DoubleSide });
+
+	const hookMaterial = new THREE.MeshBasicMaterial({ color: "#ffff00", transparent: true, opacity: .7, side: THREE.DoubleSide });
 	
 	const axisZ = new THREE.Vector3(0, 0, 1);
 
@@ -28,6 +30,7 @@ export default (i_track, i_segmentToHighlight) => {
 	function buildObjects(i_track, i_segmentToHighlight) {
 		let retval = new THREE.Group();
 		retval.add(buildMainTrackObjects(i_track.mainTrack, i_segmentToHighlight));
+		//retval.add(buildMainTrackInterSegmentHooks(i_track));
 		return retval;
 	}
 	
@@ -134,6 +137,35 @@ export default (i_track, i_segmentToHighlight) => {
 		}
 
 		retval.userData = i_curveSegment;
+		return retval;
+	}
+
+	function buildMainTrackInterSegmentHooks(i_track) {
+		let retval = new THREE.Group();
+		for (let i = 0; i <= i_track.mainTrack.trackSegments.length; ++i) {
+			retval.add(createInterSegmentHook(i_track, i));
+		}
+		return retval;
+	}
+
+	function createInterSegmentHook(i_track, i) {
+		let attitude = undefined;
+		if (i === i_track.mainTrack.trackSegments.length) {
+			attitude = computeEndOfSegment(i_track, i - 1);
+		}
+		else {
+			attitude = computeStartOfSegment(i_track, i);
+		}
+
+		let retval = new THREE.Group();
+
+		let size = 5;
+		let geometry = new THREE.TorusBufferGeometry(size * 1.5, size * .25, 6, 36, Math.PI);
+		geometry.rotateX(Math.PI/2);
+		geometry.rotateZ(attitude.rotation + Math.PI/2);
+		geometry.translate(attitude.position.x, attitude.position.y, attitude.position.z);
+		retval.add(new THREE.Mesh(geometry, hookMaterial));		
+
 		return retval;
 	}
 
