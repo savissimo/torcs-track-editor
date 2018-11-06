@@ -33,7 +33,7 @@ export default canvas => {
     
     const [ orthogonalCamera, perspectiveCamera ] = buildCameras(screenDimensions);
     var camera = orthogonalCamera;
-    var cameraPerspectiveLookAt = undefined;
+    //var cameraPerspectiveLookAt = undefined;
     //setPerspectiveLookAt(new THREE.Vector3(0, 0, 0));
     
     function buildScene() {
@@ -185,11 +185,11 @@ export default canvas => {
         }
     }
 
-    function setPerspectiveLookAt(i_lookAt) {
+    /*function setPerspectiveLookAt(i_lookAt) {
         cameraPerspectiveLookAt = i_lookAt;
         perspectiveCamera.up = new THREE.Vector3(0, 0.1, 1);
         perspectiveCamera.lookAt(cameraPerspectiveLookAt);
-    }
+    }*/
 
     function pick(i_x, i_y) {
         if (!track3DObject) {

@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { ExpansionPanel, ExpansionPanelSummary, Typography, ExpansionPanelDetails, List, ListItem } from "@material-ui/core";
+import { ExpansionPanel, ExpansionPanelSummary, Typography, ExpansionPanelDetails, } from "@material-ui/core";
 import SegmentEditor from "./SegmentEditor";
 
 export default class MainTrackEditor extends Component {
@@ -7,6 +7,10 @@ export default class MainTrackEditor extends Component {
 		super(props);
 		this.state = {			
 		};
+	}
+
+	handleSegmentUpdated(segment) {
+		this.props.onSegmentUpdated(segment);
 	}
 
 	render() {
@@ -17,11 +21,9 @@ export default class MainTrackEditor extends Component {
 				</ExpansionPanelSummary>
 				<ExpansionPanelDetails style={{ flexDirection: 'column' }}>
 					<Typography variant="body2">{this.props.mainTrack.trackSegments.length} segments in the MainTrack</Typography>
-					<List dense={true} disablePadding={true}>
-						{this.props.mainTrack.trackSegments.map(
-							(segment, index) => <ListItem key={index} disableGutters={true}><SegmentEditor segment={segment}/></ListItem>
-							)}
-					</List>
+					<SegmentEditor segment={this.props.selectedSegment} 
+						onSegmentUpdated={s => this.handleSegmentUpdated(s)}
+					/>
 				</ExpansionPanelDetails>
 			</ExpansionPanel>
 		);

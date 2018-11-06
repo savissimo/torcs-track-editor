@@ -5,7 +5,7 @@ import Track from './classes/Track.js';
 import theme from './ui/theme/index.js';
 import TrackViewer from './components/TrackViewer.js';
 import MainTrackEditor from './components/MainTrackEditor.js';
-//import './stylesheets/style.css';
+import lodash from 'lodash';
 
 const drawerWidth = 300;
 
@@ -116,6 +116,12 @@ class App extends Component {
     this.setState({ selectedSegment: segment });
   };
 
+  updateSegment = (segment) => {
+    const newTrack = lodash.clone(this.state.currentTrack);
+    //const selectedSegment = newTrack.findMainTrackSegment(segment);
+    this.setState({ currentTrack: newTrack });
+  };
+
   render() {
     const { classes } = this.props;
 
@@ -136,6 +142,7 @@ class App extends Component {
           <Drawer variant="permanent" classes={{ paper: classes.drawerPaper }}>
             <MainTrackEditor mainTrack={this.state.currentTrack.mainTrack} selectedSegment={this.state.selectedSegment}
               onSegmentSelected={segment => this.selectSegment(segment)}
+              onSegmentUpdated={segment => this.updateSegment(segment)}
             />
           </Drawer>
           <TrackViewer classes={classes} track={this.state.currentTrack} selectedSegment={this.state.selectedSegment}

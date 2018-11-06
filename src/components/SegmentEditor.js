@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { ExpansionPanel, ExpansionPanelSummary, Typography, ExpansionPanelDetails } from "@material-ui/core";
+import { Card, CardContent, CardHeader, Avatar } from "@material-ui/core";
 import Straight from "../classes/Straight";
 import Curve from "../classes/Curve";
 
@@ -16,32 +16,48 @@ export default class SegmentEditor extends Component {
 		};
 	}
 
+	handleSegmentUpdated(segment) {
+		this.props.onSegmentUpdated(segment);
+	}
+
 	render() {
 		const segment = this.props.segment;
+		if (!segment) {
+			return (<div></div>);
+		}
+		const segmentName = (segment && segment.name) || '';
 		let segmentType = 'Unknown type';
 		let segmentIcon = '';
 		let segmentProperties = undefined;
 		if (segment instanceof Straight) {
 			segmentType = 'Straight';
 			segmentIcon = iconStraight;
-			segmentProperties = <StraightEditor segment={this.props.segment} />;
+			segmentProperties = <StraightEditor segment={this.props.segment}
+				onSegmentUpdated={(s) => this.handleSegmentUpdated(s)}
+				/>;
 		}
 		else if (segment instanceof Curve) {
 			segmentType = segment.isRight ? 'Right curve' : 'Left curve';
 			segmentIcon = segment.isRight ? iconCurveRight : iconCurveLeft;
-			segmentProperties = <CurveEditor segment={this.props.segment} />;
+			segmentProperties = <CurveEditor segment={this.props.segment}
+				onSegmentUpdated={(s) => this.handleSegmentUpdated(s)}
+				/>;
 		}
 		return (
-			<ExpansionPanel style={{ width: '100%' }}>
-				<ExpansionPanelSummary>
-					<img src={segmentIcon} alt={segmentType} height="18px" />
-					<Typography variant="subtitle1">{segment.name}</Typography>
-				</ExpansionPanelSummary>
-				<ExpansionPanelDetails style={{ flexDirection: 'column' }}>
-					<Typography variant="subtitle2">{segmentType}</Typography>
+			<Card>
+				<CardContent>
+					<CardHeader
+						title={segmentName}
+						subheader={segmentType}
+						avatar={
+							<Avatar aria-label={segmentType}>
+								<img src={segmentIcon} alt={segmentType} height="18px" />
+							</Avatar>
+						}
+						/>
 					{segmentProperties}
-				</ExpansionPanelDetails>
-			</ExpansionPanel>
+				</CardContent>
+			</Card>
 		);
 	}
 }
