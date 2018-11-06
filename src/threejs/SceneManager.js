@@ -61,8 +61,8 @@ export default canvas => {
         const orthogonalCamera = new THREE.OrthographicCamera(-viewRange, viewRange, viewRange/aspectRatio, -viewRange/aspectRatio, 10, -10);
 
         const fieldOfView = 40;
-        const nearPlane = 4;
-        const farPlane = 1000; 
+        const nearPlane = 2;
+        const farPlane = 10000; 
         const perspectiveCamera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
         perspectiveCamera.position.set(0, 0, 50);
 
@@ -170,15 +170,15 @@ export default canvas => {
                 let adjustedDelta = new THREE.Vector3();
                 adjustedDelta.copy(delta);
                 adjustedDelta.applyQuaternion(quaternion);
-                if (i_shiftKey) {
+                if (!i_shiftKey) {
                     camera.up = new THREE.Vector3(0, 0, 1);
                     camera.translateOnAxis(new THREE.Vector3(1, 0, 0), delta.x * camera.zoom);
                     camera.translateOnAxis(new THREE.Vector3(0, 1, 0), delta.y * camera.zoom);
                 }
                 else {
                     camera.up = new THREE.Vector3(0, 0, 1);
-                    camera.rotateOnAxis(new THREE.Vector3(1, 0, 0), -delta.y * Math.PI/180 * camera.zoom / 4);
-                    camera.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -delta.x * Math.PI/180 * camera.zoom / 8);
+                    camera.rotateOnAxis(new THREE.Vector3(1, 0, 0), delta.y * Math.PI/180 * camera.zoom / 16);
+                    camera.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -delta.x * Math.PI/180 * camera.zoom / 16);
                 }
                 camera.updateProjectionMatrix();
             }
