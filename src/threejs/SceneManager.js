@@ -2,11 +2,12 @@ import * as THREE from 'three';
 import GeneralLights from './GeneralLights';
 import TrackObjects from './TrackObjects';
 import Segment from '../classes/Segment';
+import { InterSegmentHooks } from './EditorObjects';
+import EditorHook from '../classes/EditorHook';
 
 export default canvas => {
 
     const clock = new THREE.Clock();
-    //const origin = new THREE.Vector3(0,0,0);
     
     var raycaster = new THREE.Raycaster();
     var mouseClickPosition = new THREE.Vector2();
@@ -14,16 +15,15 @@ export default canvas => {
     var track = undefined;
     var track3DObject = undefined;
     var selectedSegment = undefined;
-    //var selectedSegment3DObject = undefined;
+    
+    var isInHookMode = false;
+    var hookObjects = undefined;
+    var selectedHooks = [];
+    var highlightedHook = undefined;
     
     const screenDimensions = {
         width: canvas.width,
         height: canvas.height
-    }
-    
-    const mousePosition = {
-        x: 0,
-        y: 0
     }
     
     const scene = buildScene();
@@ -110,6 +110,23 @@ export default canvas => {
         }*/
     }
 
+    function clearHookMode() {
+        isInHookMode = false;
+        if (hookObjects) {
+            scene.remove(hookObjects);
+        }
+    }
+
+    function updateHookMode() {
+        clearHookMode();
+        isInHookMode = true;
+        hookObjects = InterSegmentHooks().buildObjects(track, selectedHooks, highlightedHook);
+        scene.add(hookObjects);
+    }
+
+    function enterHookMode() { highlightedHook = undefined; updateHookMode(); }
+    function exitHookMode() { clearHookMode(); }
+
     function update() {
         const elapsedTime = clock.getElapsedTime();
 
@@ -135,8 +152,16 @@ export default canvas => {
     }
 
     function onMouseMove(x, y) {
-        mousePosition.x = x;
-        mousePosition.y = y;
+        if (isInHookMode) {
+            let hook = pick(x, y, hookObjects, obj => obj instanceof EditorHook);
+            if (hook instanceof EditorHook) {
+                highlightedHook = hook.data.interSegmentIndex;
+            }
+            else {
+                highlightedHook = undefined;
+            }
+            updateHookMode();
+        }
     }
 
     function zoom(i_in) {
@@ -161,6 +186,8 @@ export default canvas => {
             camera.updateProjectionMatrix();
         }
         else if (camera === perspectiveCamera) {
+            const panScaleFactor = 8;
+            const scaleFactor = 16;
             const leftButton = 1;
             //const rightButton = 2;
             if (i_buttons & leftButton) {
@@ -172,13 +199,13 @@ export default canvas => {
                 adjustedDelta.applyQuaternion(quaternion);
                 if (!i_shiftKey) {
                     camera.up = new THREE.Vector3(0, 0, 1);
-                    camera.translateOnAxis(new THREE.Vector3(1, 0, 0), delta.x * camera.zoom);
-                    camera.translateOnAxis(new THREE.Vector3(0, 1, 0), delta.y * camera.zoom);
+                    camera.translateOnAxis(new THREE.Vector3(1, 0, 0), delta.x * camera.zoom / panScaleFactor);
+                    camera.translateOnAxis(new THREE.Vector3(0, 1, 0), delta.y * camera.zoom / panScaleFactor);
                 }
                 else {
                     camera.up = new THREE.Vector3(0, 0, 1);
-                    camera.rotateOnAxis(new THREE.Vector3(1, 0, 0), delta.y * Math.PI/180 * camera.zoom / 16);
-                    camera.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -delta.x * Math.PI/180 * camera.zoom / 16);
+                    camera.rotateOnAxis(new THREE.Vector3(1, 0, 0), delta.y * Math.PI/180 * camera.zoom / scaleFactor);
+                    camera.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -delta.x * Math.PI/180 * camera.zoom / scaleFactor);
                 }
                 camera.updateProjectionMatrix();
             }
@@ -191,29 +218,40 @@ export default canvas => {
         perspectiveCamera.lookAt(cameraPerspectiveLookAt);
     }*/
 
-    function pick(i_x, i_y) {
-        if (!track3DObject) {
+    function pick(i_x, i_y, i_targetObject, i_acceptableObjectCriterion) {
+        if (!i_targetObject) {
             return undefined;
         }
 
         mouseClickPosition.x = (i_x / renderer.domElement.width) * 2 - 1;
         mouseClickPosition.y = -(i_y / renderer.domElement.height) * 2 + 1;
         raycaster.setFromCamera(mouseClickPosition, camera);
-        let intersects = raycaster.intersectObject(track3DObject, true);
+        let intersects = raycaster.intersectObject(i_targetObject, true);
         for (let i = 0; i < intersects.length; ++i) {
             let obj3D = intersects[i].object;
             let obj = obj3D.userData;
-            while (!(obj instanceof Segment) && obj3D.parent) {
+            while (!i_acceptableObjectCriterion(obj) && obj3D.parent) {
                 obj3D = obj3D.parent;
                 obj = obj3D.userData;
             }
-            if (obj instanceof Segment) {
-                updateSelectedSegment(obj);
+            if (i_acceptableObjectCriterion(obj)) {
                 return obj;
             }
         }
-        updateSelectedSegment(undefined);
         return undefined;
+    }
+
+    function pickTrackSegment(i_x, i_y) {
+        let segment = pick(i_x, i_y, track3DObject, obj => obj instanceof Segment);
+        updateSelectedSegment(segment);
+        return segment;
+    }
+
+    function pickEditorHook(i_x, i_y) {
+        if (!isInHookMode) return undefined;
+        let pickedHook = pick(i_x, i_y, hookObjects, obj => obj instanceof EditorHook);
+        //updateHookMode();
+        return pickedHook;
     }
 
 	function setPerspectiveCamera() {
@@ -229,10 +267,15 @@ export default canvas => {
         onWindowResize,
         onMouseMove,
         updateTrack,
+        updateSelectedSegment,
         zoom,
         moveCamera,
-        pick,
+        pickTrackSegment,
+        pickEditorHook,
         setPerspectiveCamera,
-        setOrthogonalCamera
+        setOrthogonalCamera,
+        enterHookMode,
+        exitHookMode,
+        updateHookMode
     }
 }

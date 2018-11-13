@@ -43,10 +43,6 @@ export default containerElement => {
 		sceneManager.moveCamera(i_xDelta, i_yDelta, i_buttons, i_shiftKey);
 	}
 
-	function pick(i_x, i_y) {
-		return sceneManager.pick(i_x, i_y);
-	}
-
 	function setPerspectiveCamera() {
 		sceneManager.setPerspectiveCamera();
 	}
@@ -55,12 +51,28 @@ export default containerElement => {
 		sceneManager.setOrthogonalCamera();
 	}
 
+	function enterHookMode() {
+		sceneManager.enterHookMode();
+	}
+
+	function exitHookMode() {
+		sceneManager.exitHookMode();
+	}
+
+	function updateHookMode() {
+		sceneManager.updateHookMode();
+	}
+
 	return {
 		updateTrack,
 		zoom,
 		moveCamera,
-		pick,
 		setPerspectiveCamera,
-		setOrthogonalCamera
+		setOrthogonalCamera,
+        enterHookMode,
+        exitHookMode,
+		updateHookMode,
+		
+		sceneManager
 	}
 }

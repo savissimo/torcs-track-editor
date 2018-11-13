@@ -2,13 +2,11 @@ import * as THREE from 'three';
 import Straight from '../classes/Straight';
 import Curve from '../classes/Curve';
 import Track from '../classes/Track';
-import Segment from '../classes/Segment';
 
 export default (i_track, i_segmentToHighlight) => {
 	const trackSegmentMaterial = new THREE.MeshStandardMaterial({ color: "#333", transparent: false, side: THREE.DoubleSide });
 	const trackSegmentHighlightMaterial = new THREE.MeshBasicMaterial({ color: "#bb0", transparent: true, opacity: .5, side: THREE.DoubleSide });
 
-	const hookMaterial = new THREE.MeshBasicMaterial({ color: "#ffff00", transparent: true, opacity: .7, side: THREE.DoubleSide });
 	
 	const axisZ = new THREE.Vector3(0, 0, 1);
 
@@ -30,7 +28,6 @@ export default (i_track, i_segmentToHighlight) => {
 	function buildObjects(i_track, i_segmentToHighlight) {
 		let retval = new THREE.Group();
 		retval.add(buildMainTrackObjects(i_track.mainTrack, i_segmentToHighlight));
-		//retval.add(buildMainTrackInterSegmentHooks(i_track));
 		return retval;
 	}
 	
@@ -51,7 +48,7 @@ export default (i_track, i_segmentToHighlight) => {
 	
 	function createStraightObject(i_straightSegment, i_highlight) {
 		let retval = new THREE.Group();
-		let segmentStart = computeStartOfSegment(i_track, i_straightSegment);
+		let segmentStart = i_track.computeStartOfSegment(i_straightSegment);
 		let displacement = i_straightSegment.computeDisplacement(segmentStart.position, segmentStart.rotation);
 
 		let geometry = new THREE.PlaneGeometry(i_straightSegment.startWidth, i_straightSegment.length, 1, 1);
@@ -82,7 +79,7 @@ export default (i_track, i_segmentToHighlight) => {
 	
 	function createCurveObject(i_curveSegment, i_highlight) {
 		let retval = new THREE.Group();
-		let segmentStart = computeStartOfSegment(i_track, i_curveSegment);
+		let segmentStart = i_track.computeStartOfSegment(i_curveSegment);
 		//let displacement = i_curveSegment.computeDisplacement(segmentStart.position, segmentStart.rotation);
 		
 		let geometries = [];
@@ -138,74 +135,6 @@ export default (i_track, i_segmentToHighlight) => {
 
 		retval.userData = i_curveSegment;
 		return retval;
-	}
-
-	function buildMainTrackInterSegmentHooks(i_track) {
-		let retval = new THREE.Group();
-		for (let i = 0; i <= i_track.mainTrack.trackSegments.length; ++i) {
-			retval.add(createInterSegmentHook(i_track, i));
-		}
-		return retval;
-	}
-
-	function createInterSegmentHook(i_track, i) {
-		let attitude = undefined;
-		if (i === i_track.mainTrack.trackSegments.length) {
-			attitude = computeEndOfSegment(i_track, i - 1);
-		}
-		else {
-			attitude = computeStartOfSegment(i_track, i);
-		}
-
-		let retval = new THREE.Group();
-
-		let size = 5;
-		let geometry = new THREE.TorusBufferGeometry(size * 1.5, size * .25, 6, 36, Math.PI);
-		geometry.rotateX(Math.PI/2);
-		geometry.rotateZ(attitude.rotation + Math.PI/2);
-		geometry.translate(attitude.position.x, attitude.position.y, attitude.position.z);
-		retval.add(new THREE.Mesh(geometry, hookMaterial));		
-
-		return retval;
-	}
-
-	function computeEndOfSegment(i_track, i_segment) {
-		if (!(i_track instanceof Track) || !(i_segment instanceof Segment || Number.isInteger(i_segment))) { return undefined; }
-
-		if (i_segment instanceof Segment) {
-			let segmentIndex = i_track.getSegmentIndex(i_segment);
-			if (segmentIndex !== undefined) {
-				return computeEndOfSegment(i_track, segmentIndex);
-			}
-			return undefined;
-		}
-
-		let segmentPosition = new THREE.Vector3(0, 0, 0);
-		let segmentAngleAroundZ = 0;
-
-		for (let i = 0; i < i_track.mainTrack.trackSegments.length && i <= i_segment; ++i) {
-			let segment = i_track.mainTrack.trackSegments[i];
-
-			let { position, rotation } = segment.computeDisplacement(segmentPosition, segmentAngleAroundZ);
-			segmentPosition.addVectors(segmentPosition, position);
-			segmentAngleAroundZ += rotation;
-		}
-
-		return { position: segmentPosition, rotation: segmentAngleAroundZ };
-	}
-
-	function computeStartOfSegment(i_track, i_segment) {
-		if (!(i_track instanceof Track) || !(i_segment instanceof Segment || Number.isInteger(i_segment))) { return undefined; }
-
-		if (i_segment instanceof Segment) {
-			let segmentIndex = i_track.getSegmentIndex(i_segment);
-			if (segmentIndex !== undefined) {
-				return computeEndOfSegment(i_track, segmentIndex - 1);
-			}
-			return undefined;
-		}
-
-		return computeEndOfSegment(i_track, i_segment - 1);
 	}
 
 	/*function createText(i_text, i_position) {

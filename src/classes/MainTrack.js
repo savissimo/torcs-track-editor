@@ -66,4 +66,8 @@ export default class MainTrack {
 			});
 		console.log(this.trackSegments);
 	}
+
+	insertSegmentAt(i_segment, i_insertionIndex) {
+		this.trackSegments.splice(i_insertionIndex, 0, i_segment);
+	}
 }

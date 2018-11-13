@@ -71,7 +71,7 @@ const styles = theme => ({
     },
   },
   appBarSpacer: theme.mixins.toolbar,
-  content: {
+  trackViewer: {
     flexGrow: 1,
     //padding: theme.spacing.unit * 3,
     height: 'calc(100vh - 72px)',
@@ -116,6 +116,12 @@ class App extends Component {
     this.setState({ selectedSegment: segment });
   };
 
+  addSegment = (segment, insertionIndex) => {
+    let track = lodash.clone(this.state.currentTrack);
+    track.mainTrack.insertSegmentAt(segment, insertionIndex);
+    this.setState({ currentTrack: track, selectedSegment: track.mainTrack.trackSegments[insertionIndex] });
+  };
+
   updateSegment = (segment) => {
     const newTrack = lodash.clone(this.state.currentTrack);
     //const selectedSegment = newTrack.findMainTrackSegment(segment);
@@ -145,8 +151,10 @@ class App extends Component {
               onSegmentUpdated={segment => this.updateSegment(segment)}
             />
           </Drawer>
-          <TrackViewer classes={classes} track={this.state.currentTrack} selectedSegment={this.state.selectedSegment}
+          <TrackViewer className={classes.trackViewer} 
+            track={this.state.currentTrack} selectedSegment={this.state.selectedSegment}
             onSegmentSelected={segment => this.selectSegment(segment)}
+            onSegmentAdded={(segment, insertionIndex) => this.addSegment(segment, insertionIndex)}
           />
         </main>
       </MuiThemeProvider>
