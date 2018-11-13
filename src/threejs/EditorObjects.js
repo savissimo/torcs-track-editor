@@ -11,7 +11,7 @@ export function InterSegmentHooks () {
 		let retval = new THREE.Group();
 		retval.add(buildMainTrackInterSegmentHooks(i_track));
 		retval.add(buildHighlightedObjects(i_track, i_positionsToHighlight));
-		if (i_positionToHighlightHover) {
+		if (i_positionToHighlightHover !== undefined) {
 			retval.add(buildHighlightedObjects(i_track, [ i_positionToHighlightHover ], hookHoverMaterial));
 		}
 		return retval;

@@ -186,7 +186,12 @@ class TrackViewer extends Component {
 		case 'addCurveRight': 
 		case 'addCurveLeft': 
 			return (e) => {
-				this.pickHook(i_action);
+				if (this.props.track.mainTrack.trackSegments.length === 0) {
+					this.handlePickHookAction(i_action, { data: { interSegmentIndex: 0 }});
+				}
+				else {
+					this.pickHook(i_action);
+				}
 				this.addSegmentSpeedDialHandleClick();
 			};
 		default: 
