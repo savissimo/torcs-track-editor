@@ -35,6 +35,25 @@ export default canvas => {
     var camera = orthogonalCamera;
     //var cameraPerspectiveLookAt = undefined;
     //setPerspectiveLookAt(new THREE.Vector3(0, 0, 0));
+
+    const xyPlane = buildXYPlane();
+
+    function buildXYPlane() {
+        const xyPlaneSize = 100000;
+        const xyPlaneGeometry = new THREE.Geometry();
+        xyPlaneGeometry.vertices = [
+            new THREE.Vector3(-xyPlaneSize, -xyPlaneSize, 0),
+            new THREE.Vector3(-xyPlaneSize,  xyPlaneSize, 0),
+            new THREE.Vector3( xyPlaneSize,  xyPlaneSize, 0),
+            new THREE.Vector3( xyPlaneSize, -xyPlaneSize, 0),
+        ];
+        xyPlaneGeometry.faces = [
+            new THREE.Face3(0, 3, 1),
+            new THREE.Face3(2, 1, 3),
+        ];
+        xyPlaneGeometry.computeFaceNormals();
+        return new THREE.Mesh(xyPlaneGeometry);
+    }
     
     function buildScene() {
         const scene = new THREE.Scene();
@@ -76,7 +95,7 @@ export default canvas => {
 
     function createSceneSubjects(scene) {
         const sceneSubjects = [
-            lights
+            lights,
         ];
 
         return sceneSubjects;
@@ -132,7 +151,7 @@ export default canvas => {
 
         for(let i=0; i<sceneSubjects.length; i++) {
             if (sceneSubjects[i].update) {
-                sceneSubjects[i].update(elapsedTime);
+                sceneSubjects[i].update(elapsedTime, perspectiveCamera);
             }
         }
 
@@ -171,7 +190,7 @@ export default canvas => {
             camera.updateProjectionMatrix();
         }
         else if (camera === perspectiveCamera) {
-            camera.translateOnAxis(new THREE.Vector3(0, 0, 1), 8 * (i_in ? -1 : 1));
+            camera.translateOnAxis(new THREE.Vector3(0, 0, 1), 20 * (i_in ? -1 : 1));
             camera.updateProjectionMatrix();
         }
     }
@@ -186,21 +205,36 @@ export default canvas => {
             camera.updateProjectionMatrix();
         }
         else if (camera === perspectiveCamera) {
-            const panScaleFactor = 8;
+            const panScaleFactor = 1/2;
             const scaleFactor = 16;
             const leftButton = 1;
             //const rightButton = 2;
             if (i_buttons & leftButton) {
                 let delta = new THREE.Vector3(-i_xDelta, i_yDelta, 0);
-                let quaternion = new THREE.Quaternion();
-                camera.getWorldQuaternion(quaternion);
-                let adjustedDelta = new THREE.Vector3();
-                adjustedDelta.copy(delta);
-                adjustedDelta.applyQuaternion(quaternion);
+
+                raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+                let startIntersects = raycaster.intersectObject(xyPlane);
+                let newScreenPoint = { 
+                    x: (delta.x / renderer.domElement.width),
+                    y: (delta.y / renderer.domElement.height)
+                    };
+                raycaster.setFromCamera(newScreenPoint, camera);
+                let endIntersects = raycaster.intersectObject(xyPlane);
+                let xyDelta = undefined;
+                if (startIntersects.length > 0 && endIntersects.length > 0) {
+                    xyDelta = new THREE.Vector3(
+                        endIntersects[0].point.x - startIntersects[0].point.x,
+                        endIntersects[0].point.y - startIntersects[0].point.y,
+                        0
+                    );
+                }
+
                 if (!i_shiftKey) {
                     camera.up = new THREE.Vector3(0, 0, 1);
-                    camera.translateOnAxis(new THREE.Vector3(1, 0, 0), delta.x * camera.zoom / panScaleFactor);
-                    camera.translateOnAxis(new THREE.Vector3(0, 1, 0), delta.y * camera.zoom / panScaleFactor);
+                    if (xyDelta) {
+                        camera.position.x += xyDelta.x * camera.zoom / panScaleFactor;
+                        camera.position.y += xyDelta.y * camera.zoom / panScaleFactor;
+                    }
                 }
                 else {
                     camera.up = new THREE.Vector3(0, 0, 1);
@@ -276,6 +310,6 @@ export default canvas => {
         setOrthogonalCamera,
         enterHookMode,
         exitHookMode,
-        updateHookMode
+        updateHookMode,
     }
 }
