@@ -85,11 +85,18 @@ export default (i_track, i_segmentToHighlight) => {
 		let geometries = [];
 		let edgeGeometries = [];
 		
-		for (let p = 0; p < 2; ++p) {
+		let numberOfSteps = i_curveSegment.getNumberOfSteps();
+		let currentStartPosition = new THREE.Vector3();
+		currentStartPosition.copy(segmentStart.position);
+		let currentRotation = segmentStart.rotation;
+		for (let p = 0; p < numberOfSteps; ++p) {
 			let partDisplacement = i_curveSegment.computePartDisplacement(p, segmentStart.position, segmentStart.rotation);
 			let partArc = partDisplacement.rotation;
 			
-			let radius = p === 0 ? i_curveSegment.startRadius : i_curveSegment.endRadius;
+			let partDisplacementDelta = new THREE.Vector3();
+			partDisplacementDelta.subVectors(partDisplacement.position, segmentStart.position);
+			
+			let radius = i_curveSegment.getPartRadius(p);
 			let innerRadius = radius - i_curveSegment.startWidth / 2;
 			let outerRadius = radius + i_curveSegment.startWidth / 2;
 			let partGeometry = new THREE.RingGeometry(
@@ -98,16 +105,16 @@ export default (i_track, i_segmentToHighlight) => {
 				8, 1, 0, partArc
 				);
 				
-			partGeometry.rotateZ(segmentStart.rotation + (i_curveSegment.isRight ? Math.PI/2 : - Math.PI/2));
+			partGeometry.rotateZ(currentRotation + (i_curveSegment.isRight ? Math.PI/2 : - Math.PI/2));
 			
 			let centerPosition = new THREE.Vector3(0, radius * (i_curveSegment.isRight ? -1 : 1), 0);
-			centerPosition.copy(centerPosition.applyAxisAngle(axisZ, segmentStart.rotation));
-			centerPosition.copy(centerPosition.add(segmentStart.position));
+			centerPosition.copy(centerPosition.applyAxisAngle(axisZ, currentRotation));
+			centerPosition.addVectors(centerPosition, currentStartPosition);
 			partGeometry.translate(centerPosition.x, centerPosition.y, centerPosition.z);
 
-			segmentStart.position.addVectors(segmentStart.position, partDisplacement.position);
-			segmentStart.rotation += partDisplacement.rotation;
-						
+			currentStartPosition.addVectors(currentStartPosition, partDisplacement.position);
+			currentRotation += partDisplacement.rotation;
+			
 			geometries.push(partGeometry);
 			edgeGeometries.push(new THREE.EdgesGeometry(partGeometry));
 		}

@@ -7,10 +7,18 @@ export default class Curve extends Segment {
 	startRadius = 20;
 	endRadius = 20;
 
+	getNumberOfSteps() {
+		return 6;
+	}
+
+	getPartRadius(i_partIndex) {
+		return i_partIndex < 3 ? this.startRadius : this.endRadius;
+	}
+
 	computeDisplacement(i_initialPosition, i_initialAngleAroundZ) {
 		let totalPosition = new THREE.Vector3();
 		let totalRotation = 0;
-		for (let i = 0; i < 2; ++i) {
+		for (let i = 0; i < this.getNumberOfSteps(); ++i) {
 			let { position, rotation } = this.computePartDisplacement(i, i_initialPosition, i_initialAngleAroundZ);
 			totalPosition.addVectors(totalPosition, position);
 			totalRotation += rotation;
@@ -29,13 +37,15 @@ export default class Curve extends Segment {
 		let totalRotation = i_initialAngleAroundZ;
 		const axisZ = new THREE.Vector3(0, 0, 1);
 
-		for (let p = 0; p <= i_part && p < 2; ++p) {
-			let partArc = totalArc / 2;
+		let numSteps = this.getNumberOfSteps();
+
+		for (let p = 0; p <= i_part && p < numSteps; ++p) {
+			let partArc = totalArc / numSteps;
 			partRotation = partArc;
 
 			let positionDelta = new THREE.Vector3();
 			if (p === i_part) {
-				let radius = p === 0 ? this.startRadius : this.endRadius;
+				let radius = this.getPartRadius(p);
 				let initialPosition = new THREE.Vector3(0, -radius * (this.isRight ? -1 : 1), 0);
 				initialPosition.applyAxisAngle(axisZ, totalRotation);
 				positionDelta.copy(initialPosition);
