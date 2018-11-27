@@ -43,12 +43,13 @@ export default class SegmentEditor extends Component {
 				onSegmentUpdated={(s) => this.handleSegmentUpdated(s)}
 				/>;
 		}
+		const segmentLength = this.props.segment.getLength();
 		return (
 			<Card>
 				<CardContent>
 					<CardHeader
 						title={segmentName}
-						subheader={segmentType}
+						subheader={segmentType + ' - ' + segmentLength.toFixed(2) + ' m'}
 						avatar={
 							<Avatar aria-label={segmentType}>
 								<img src={segmentIcon} alt={segmentType} height="18px" />

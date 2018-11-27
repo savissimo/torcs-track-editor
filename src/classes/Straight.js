@@ -20,4 +20,8 @@ export default class Straight extends Segment {
 			rotation: 0
 		};
 	}
+
+	getLength() {
+		return this.length;
+	}
 }

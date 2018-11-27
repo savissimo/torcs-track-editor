@@ -7,12 +7,23 @@ export default class Curve extends Segment {
 	startRadius = 20;
 	endRadius = 20;
 
+	profilStepsLength = 4;
+	
+	getLength() {
+		return (this.startRadius + this.endRadius) / 2 * (this.arc * Math.PI/180);
+	}
+
 	getNumberOfSteps() {
-		return 6;
+		return Math.ceil(this.getLength() / this.profilStepsLength);
 	}
 
 	getPartRadius(i_partIndex) {
-		return i_partIndex < 3 ? this.startRadius : this.endRadius;
+		//return i_partIndex < this.getNumberOfSteps()/2 ? this.startRadius : this.endRadius;
+		let ratio = this.getNumberOfSteps() === 1 
+			? 1
+			: 1.0 / (this.getNumberOfSteps() - 1)
+			;
+		return this.startRadius + (this.endRadius - this.startRadius) * i_partIndex * ratio;
 	}
 
 	computeDisplacement(i_initialPosition, i_initialAngleAroundZ) {

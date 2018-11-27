@@ -11,6 +11,8 @@ export default class MainTrack {
 	profilStopsLength = 4;
 	defaultSurface = 'asphalt2-lines';
 	
+	defaultProfilStepsLength = 4;
+
 	defaultLeftSide = new SegmentSide();
 	defaultLeftBorder = new SegmentBorder();
 	defaultLeftBarrier = new SegmentBarrier();
@@ -49,6 +51,7 @@ export default class MainTrack {
 					segment.arc = TORCSUtils.getNumericAttribute(tsNode, 'arc');
 					segment.startRadius = TORCSUtils.getNumericAttribute(tsNode, 'radius');
 					segment.endRadius = TORCSUtils.getNumericAttribute(tsNode, 'end radius') || segment.startRadius;
+					segment.profilStepsLength = TORCSUtils.getNumericAttribute(tsNode, 'profil steps length') || this.defaultProfilStepsLength;
 					break;
 				default:
 					break;
