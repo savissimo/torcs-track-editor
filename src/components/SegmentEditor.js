@@ -8,6 +8,7 @@ import iconCurveRight from '../assets/icons/curve-right.svg';
 import iconCurveLeft from '../assets/icons/curve-left.svg';
 import StraightEditor from "./StraightEditor";
 import CurveEditor from "./CurveEditor";
+import SegmentOuterPartsEditor from "./SegmentOuterPartsEditor";
 
 export default class SegmentEditor extends Component {
 	constructor(props) {
@@ -57,6 +58,9 @@ export default class SegmentEditor extends Component {
 						}
 						/>
 					{segmentProperties}
+					<SegmentOuterPartsEditor segment={this.props.segment} 
+						onSegmentUpdated={(s) => this.handleSegmentUpdated(s)}
+						/>
 				</CardContent>
 			</Card>
 		);
