@@ -4,9 +4,12 @@ import Curve from '../classes/Curve';
 import Track from '../classes/Track';
 
 export default (i_track, i_segmentToHighlight) => {
-	const trackSegmentMaterial = new THREE.MeshStandardMaterial({ color: "#333", transparent: false, side: THREE.DoubleSide });
+	const trackSegmentMaterial = new THREE.MeshStandardMaterial({ color: "#111", transparent: false, side: THREE.DoubleSide });
 	const trackSegmentHighlightMaterial = new THREE.MeshBasicMaterial({ color: "#bb0", transparent: true, opacity: .5, side: THREE.DoubleSide });
-
+	
+	const trackBorderMaterial = new THREE.MeshStandardMaterial({ color: "#c66", transparent: false, side: THREE.DoubleSide });
+	const trackSideMaterial = new THREE.MeshStandardMaterial({ color: "#6c6", transparent: false, side: THREE.DoubleSide });
+	const trackBarrierMaterial = new THREE.MeshStandardMaterial({ color: "#999", transparent: false, side: THREE.DoubleSide });
 	
 	const axisZ = new THREE.Vector3(0, 0, 1);
 
@@ -38,30 +41,92 @@ export default (i_track, i_segmentToHighlight) => {
 	}
 
 	function createSegmentObject(segment, i_highlight) {
+		let segment3DObject = undefined;
 		if (segment instanceof Straight) {
-			return createStraightObject(segment, i_highlight);
+			segment3DObject = createStraightObject(segment, i_highlight);
 		}
 		else if (segment instanceof Curve) {
-			return createCurveObject(segment, i_highlight);
+			segment3DObject = createCurveObject(segment, i_highlight);
 		}
+
+		return segment3DObject;
 	}
 	
 	function createStraightObject(i_straightSegment, i_highlight) {
+
+		let getOuterGeometries = (i_border, i_side, i_barrier, i_isRight) => {
+			let rightOffsetStart = i_straightSegment.startWidth/2;
+			let rightOffsetEnd = rightOffsetStart;
+
+			let borderGeometry = new THREE.Geometry();
+			borderGeometry.vertices = [
+				new THREE.Vector3(rightOffsetStart + 0, 0, 0),
+				new THREE.Vector3(rightOffsetStart + 0, i_straightSegment.length, 0),
+				new THREE.Vector3(rightOffsetEnd   + i_border.width, i_straightSegment.length, i_border.height),
+				new THREE.Vector3(rightOffsetEnd   + i_border.width, 0, i_border.height)
+			];
+			borderGeometry.faces = [ new THREE.Face3(0, 1, 2), new THREE.Face3(0, 2, 3) ];
+			borderGeometry.computeFaceNormals();
+			borderGeometry.translate(0, -i_straightSegment.length/2, 0);
+			if (!i_isRight) {
+				borderGeometry.scale(-1, 1, 1);
+			}
+
+			rightOffsetStart += i_border.width;
+			rightOffsetEnd += i_border.width;
+
+			let sideGeometry = new THREE.Geometry();
+			sideGeometry.vertices = [
+				new THREE.Vector3(rightOffsetStart + 0, 0, 0),
+				new THREE.Vector3(rightOffsetStart + 0, i_straightSegment.length, 0),
+				new THREE.Vector3(rightOffsetEnd   + i_side.endWidth, i_straightSegment.length, 0),
+				new THREE.Vector3(rightOffsetEnd   + i_side.startWidth, 0, 0)
+			];
+			sideGeometry.faces = [ new THREE.Face3(0, 1, 2), new THREE.Face3(0, 2, 3) ];
+			sideGeometry.computeFaceNormals();
+			sideGeometry.translate(0, -i_straightSegment.length/2, 0);
+			if (!i_isRight) {
+				sideGeometry.scale(-1, 1, 1);
+			}
+
+			rightOffsetStart += i_side.startWidth;
+			rightOffsetEnd += i_side.endWidth;
+
+			return [ borderGeometry, sideGeometry ];
+		};
+
 		let retval = new THREE.Group();
 		let segmentStart = i_track.computeStartOfSegment(i_straightSegment);
 		let displacement = i_straightSegment.computeDisplacement(segmentStart.position, segmentStart.rotation);
 
 		let geometry = new THREE.PlaneGeometry(i_straightSegment.startWidth, i_straightSegment.length, 1, 1);
-		geometry.rotateZ(segmentStart.rotation + Math.PI/2);
-		geometry.translate(segmentStart.position.x + displacement.position.x/2, 
-			segmentStart.position.y + displacement.position.y/2, 
-			segmentStart.position.z + displacement.position.z/2);
+
+		let [ leftBorderGeometry, leftSideGeometry ] = 
+			getOuterGeometries(i_straightSegment.leftBorder(), i_straightSegment.leftSide(), i_straightSegment.leftBarrier(), false);
+		let [ rightBorderGeometry, rightSideGeometry ] = 
+			getOuterGeometries(i_straightSegment.rightBorder(), i_straightSegment.rightSide(), i_straightSegment.rightBarrier(), true);
+		
+		[
+			geometry, 
+			leftBorderGeometry, rightBorderGeometry,
+			leftSideGeometry, rightSideGeometry,
+		].forEach(g => {
+			g.rotateZ(segmentStart.rotation - Math.PI/2);
+			g.translate(segmentStart.position.x + displacement.position.x/2, 
+				segmentStart.position.y + displacement.position.y/2, 
+				segmentStart.position.z + displacement.position.z/2);
+			});
 
 		retval.add(new THREE.Mesh(geometry, trackSegmentMaterial));
 		retval.add(new THREE.LineSegments(
 			new THREE.EdgesGeometry(geometry),
 			new THREE.LineBasicMaterial({ color: 0xff00ff })
 			));
+		
+		retval.add(new THREE.Mesh(leftBorderGeometry,  trackBorderMaterial));
+		retval.add(new THREE.Mesh(leftSideGeometry,  trackSideMaterial));
+		retval.add(new THREE.Mesh(rightBorderGeometry, trackBorderMaterial));
+		retval.add(new THREE.Mesh(rightSideGeometry, trackSideMaterial));
 
 		if (i_highlight) {
 			retval.add(new THREE.Mesh(geometry, trackSegmentHighlightMaterial));
