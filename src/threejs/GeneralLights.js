@@ -2,7 +2,7 @@ import * as THREE from 'three'
 
 export default scene => {    
 
-    const ambientLight = new THREE.AmbientLight('#111');
+    const ambientLight = new THREE.AmbientLight('#fff');
 
     const sunLight = new THREE.DirectionalLight("#fff", 1);
     sunLight.position.set(1, 1, 100).normalize();
@@ -18,7 +18,7 @@ export default scene => {
     const testLight = new THREE.SpotLight(0xff0000, 1, 500, Math.PI/2, .1, 2);
     testLight.position.set(350, 0, 10);
     testLight.rotation.set(60, 30, 0);
-    scene.add(testLight);
+    //scene.add(testLight);
 
     //const rad = 80;
 

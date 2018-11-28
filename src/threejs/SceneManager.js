@@ -27,7 +27,7 @@ export default canvas => {
     }
     
     const scene = buildScene();
-    const lights = new GeneralLights(scene);
+    const lights = GeneralLights(scene);
     const renderer = buildRender(screenDimensions);
     const sceneSubjects = createSceneSubjects(scene);
     
