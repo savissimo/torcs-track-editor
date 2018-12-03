@@ -6,6 +6,12 @@ export default class SegmentBorder {
 	surface = 'curb-5cm-r';
 	style = 'plan';
 
+	segment = undefined;
+
+	constructor(i_segment) {
+		this.segment = i_segment;
+	}
+
 	loadTORCSXml(i_xmlNode) {
 		this.width = TORCSUtils.getNumericAttribute(i_xmlNode, 'width');
 		this.height = TORCSUtils.getNumericAttribute(i_xmlNode, 'height');

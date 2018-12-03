@@ -65,18 +65,18 @@ export default class MainTrack {
 					segment.startWidth = theTrack.width;
 					segment.endWidth = theTrack.width;
 
-					segment.m_leftBorder = new SegmentBorder(); 
+					segment.m_leftBorder = new SegmentBorder(segment); 
 					segment.m_leftBorder.loadTORCSXml(tsNode.querySelector('section[name="Left Border"]'));
-					segment.m_leftSide = new SegmentSide(); 
+					segment.m_leftSide = new SegmentSide(segment); 
 					segment.m_leftSide.loadTORCSXml(tsNode.querySelector('section[name="Left Side"]'));
-					segment.m_leftBarrier = new SegmentBarrier(); 
+					segment.m_leftBarrier = new SegmentBarrier(segment); 
 					segment.m_leftBarrier.loadTORCSXml(tsNode.querySelector('section[name="Left Barrier"]'));
 
-					segment.m_rightBorder = new SegmentBorder(); 
+					segment.m_rightBorder = new SegmentBorder(segment); 
 					segment.m_rightBorder.loadTORCSXml(tsNode.querySelector('section[name="Right Border"]'));
-					segment.m_rightSide = new SegmentSide(); 
+					segment.m_rightSide = new SegmentSide(segment); 
 					segment.m_rightSide.loadTORCSXml(tsNode.querySelector('section[name="Right Side"]'));
-					segment.m_rightBarrier = new SegmentBarrier(); 
+					segment.m_rightBarrier = new SegmentBarrier(segment); 
 					segment.m_rightBarrier.loadTORCSXml(tsNode.querySelector('section[name="Right Barrier"]'));
 				}
 				return segment;

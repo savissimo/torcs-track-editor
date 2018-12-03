@@ -8,9 +8,9 @@ const styles = theme => ({
 
 class SegmentBarrierEditor extends Component {
 	handleChange = (field) => (value) => {
-		const side = this.props.side;
-		side[field] = value;
-		this.props.onBarrierUpdated(side);
+		const barrier = this.props.barrier;
+		barrier[field] = value;
+		this.props.onBarrierUpdated(barrier);
 	}
 
 	render() {

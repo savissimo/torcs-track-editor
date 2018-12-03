@@ -2,16 +2,31 @@ import * as THREE from 'three'
 
 export default scene => {    
 
-    const ambientLight = new THREE.AmbientLight('#fff');
+    const ambientLight = new THREE.AmbientLight('#333');
+    const hemisphereLight = new THREE.HemisphereLight(0x0000ff, 0x44ff22, 0.6);
 
     const sunLight = new THREE.DirectionalLight("#fff", 1);
-    sunLight.position.set(1, 1, 100).normalize();
+    sunLight.position.set(-1, .75, 1).normalize();
+    sunLight.position.multiplyScalar(50);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = sunLight.shadow.mapSize.height = 1024*4;
+    const d = 1000;
+    sunLight.shadow.camera.left = -d;
+    sunLight.shadow.camera.right = d;
+    sunLight.shadow.camera.top = d;
+    sunLight.shadow.camera.bottom = -d;
+    sunLight.shadow.camera.near = 1;
+    sunLight.shadow.camera.far = 1000;
+    sunLight.shadow.bias = 0.0001;
+    sunLight.shadow.radius = 2;
+    //sunLight.shadowDarkness = .35;
     //const lightIn = new THREE.PointLight("#4CAF50", 10);
     //const lightOut = new THREE.PointLight("#2196F3", 10);
     //lightOut.position.set(40,20,40);
 
     scene.add(ambientLight);
-    //scene.add(sunLight);
+    //scene.add(hemisphereLight);
+    scene.add(sunLight);
     //scene.add(lightIn);
     //scene.add(lightOut);
 

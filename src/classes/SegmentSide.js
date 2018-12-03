@@ -5,6 +5,12 @@ export default class SegmentSide {
 	endWidth = 4;
 	surface = 'grass';
 
+	segment = undefined;
+
+	constructor(i_segment) {
+		this.segment = i_segment;
+	}
+
 	loadTORCSXml(i_xmlNode) {
 		this.startWidth = TORCSUtils.getNumericAttribute(i_xmlNode, 'start width');
 		this.endWidth = TORCSUtils.getNumericAttribute(i_xmlNode, 'end width');
