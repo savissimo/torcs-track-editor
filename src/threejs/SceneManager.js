@@ -71,7 +71,7 @@ export default canvas => {
         renderer.gammaInput = true;
         renderer.gammaOutput = true; 
 
-        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.enabled = false;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         return renderer;
