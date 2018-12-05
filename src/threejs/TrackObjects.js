@@ -166,9 +166,10 @@ export default (i_track, i_segmentToHighlight) => {
 
 				let sideGeometry = CurvePartSideGeometry(p, rightOffsetStart, rightOffsetEnd, i_side, i_isInner);
 
-				let deltaWidth = i_side.endWidth - i_side.startWidth;
+				const deltaWidth = i_side.endWidth - i_side.startWidth;
 				rightOffsetStart += i_side.startWidth + deltaWidth / numberOfSteps * p;
 				rightOffsetEnd += i_side.startWidth + deltaWidth / numberOfSteps * (p + 1);
+				//console.log(i_curveSegment.name + ' part ' + p + ': ' + deltaWidth + ', ' + rightOffsetStart + ', ' + rightOffsetEnd);
 
 				let barrierGeometry = CurvePartBarrierGeometry(p, rightOffsetStart, rightOffsetEnd, i_barrier, i_isInner);
 	
@@ -235,17 +236,23 @@ export default (i_track, i_segmentToHighlight) => {
 		
 		let mergedEdgeGeometry = new THREE.EdgesGeometry(mergedGeometry);
 		
-		let mesh = new THREE.Mesh(mergedGeometry, trackSegmentMaterial);
-		retval.add(mesh);
+		let trackMesh = new THREE.Mesh(mergedGeometry, trackSegmentMaterial);
+		retval.add(trackMesh);
 		retval.add(new THREE.LineSegments(mergedEdgeGeometry, new THREE.LineBasicMaterial({ color: 0x4400ff })));
 
-		borderGeometries.forEach(cg => retval.add(new THREE.Mesh(cg, trackBorderMaterial)));
-		sideGeometries.forEach(sg => retval.add(new THREE.Mesh(sg, trackSideMaterial)));
-		barrierGeometries.forEach(bg => retval.add(new THREE.Mesh(bg, trackBarrierMaterial)));
-		
+		let meshes = [ trackMesh ];
+		borderGeometries.forEach(cg => { let mesh = new THREE.Mesh(cg, trackBorderMaterial); meshes.push(mesh); retval.add(mesh); });
+		sideGeometries.forEach(sg => { let mesh = new THREE.Mesh(sg, trackSideMaterial); meshes.push(mesh); retval.add(mesh); });
+		barrierGeometries.forEach(bg => { let mesh = new THREE.Mesh(bg, trackBarrierMaterial); meshes.push(mesh); retval.add(mesh); });
+
+		meshes.forEach(m => {
+			m.castShadow = true;
+			m.receiveShadow = true;
+		})
+
         //let vnh = new THREE.VertexNormalsHelper( mesh, 10, 0x00ff00, 10 );
-        //retval.add( vnh );
-		//let fnh = new THREE.FaceNormalsHelper( mesh, 10, 0x00ff00, 10 );
+		//retval.add( vnh );
+		//let fnh = new THREE.FaceNormalsHelper( trackMmesh, 10, 0x00ff00, 10 );
 		//retval.add(fnh);
 		
 		if (i_highlight) {

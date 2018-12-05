@@ -106,7 +106,7 @@ export let StraightBarrierGeometry =
 
 export let CurvePartBorderGeometry = 
 	(i_part, i_startOffset, i_endOffset, i_border, i_isInner, i_subdivisions) => {
-	let subdivisions = i_subdivisions || 1;
+	let subdivisions = i_subdivisions || 4;
 
 	let radius = i_border.segment.getPartRadius(i_part);
 	let innerRadius = (i_subdivision) => radius - i_startOffset - (i_endOffset - i_startOffset) * i_subdivision / subdivisions;
@@ -165,7 +165,7 @@ export let CurvePartBorderGeometry =
 
 export let CurvePartSideGeometry = 
 	(i_part, i_startOffset, i_endOffset, i_side, i_isInner, i_subdivisions) => {
-	const subdivisions = i_subdivisions || 1;
+	const subdivisions = i_subdivisions || 4;
 
 	const radius = i_side.segment.getPartRadius(i_part);
 	const innerRadius = radius - i_startOffset;
@@ -176,6 +176,7 @@ export let CurvePartSideGeometry =
 	const partStartWidth = i_side.startWidth + (i_side.endWidth - i_side.startWidth) * i_part / numberOfParts;
 	const partEndWidth = i_side.startWidth + (i_side.endWidth - i_side.startWidth) * (i_part + 1) / numberOfParts;
 	let sideWidth = (i_subdivision) => partStartWidth + (partEndWidth - partStartWidth) * i_subdivision / subdivisions;
+	//for (let i = 0; i < subdivisions; ++i) { console.log('Side ' + i_isInner + ' of ' + i_side.segment.name + ' width[' + i + ']: ' + sideWidth(i)); }
 	let sideInnerRadius = (i_subdivision) => 
 		i_isInner 
 			? innerRadius - sideWidth(i_subdivision)
@@ -213,34 +214,48 @@ export let CurvePartSideGeometry =
 	}
 
 	sideGeometry.computeFaceNormals();
-	//if (!i_isInner) {
-		//reverseFacesWindingOrder(sideGeometry);
-	//}
+	if (!i_side.segment.isRight) {
+		reverseFacesWindingOrder(sideGeometry);
+	}
 
 	return sideGeometry;
 };
 
 export let CurvePartBarrierGeometry = 
 	(i_part, i_startOffset, i_endOffset, i_barrier, i_isInner, i_subdivisions) => {
-	let subdivisions = i_subdivisions || 1;
+	let subdivisions = i_subdivisions || 4;
 
-	let radius = i_barrier.segment.getPartRadius(i_part);
-	let numParts = i_barrier.segment.getNumberOfSteps();
-	let subStartOffset = i_startOffset + (i_endOffset - i_startOffset) * i_part / numParts;
-	let subEndOffset = i_startOffset + (i_endOffset - i_startOffset) * (i_part + 1) / numParts;
-	let innerRadius = (i_subdivision) => radius - subStartOffset - (subEndOffset - subStartOffset) * i_subdivision / subdivisions;
-	let outerRadius = (i_subdivision) => radius + subStartOffset + (subEndOffset - subStartOffset) * i_subdivision / subdivisions;
+	const radius = i_barrier.segment.getPartRadius(i_part);
+	const numberOfParts = i_barrier.segment.getNumberOfSteps();
+	const partStartOffset = i_startOffset + (i_endOffset - i_startOffset) * i_part / numberOfParts;
+	const partEndOffset = i_startOffset + (i_endOffset - i_startOffset) * (i_part + 1) / numberOfParts;
+	let subStartOffset = (i_subdivision) => partStartOffset + (partEndOffset - partStartOffset) * i_subdivision / subdivisions;
+	let subEndOffset = (i_subdivision) => partStartOffset + (partEndOffset - partStartOffset) * (i_subdivision + 1) / subdivisions;
+	//for (let i = 0; i < subdivisions; ++i) { console.log('Barrier ' + i_isInner + ' of ' + i_barrier.segment.name + ' offsetStart[' + i + ']: ' + subStartOffset(i)); }
+	//for (let i = 0; i < subdivisions; ++i) { console.log('Barrier ' + i_isInner + ' of ' + i_barrier.segment.name + ' offsetEnd[' + i + ']: ' + subEndOffset(i)); }
+	let innerStartRadius = (i_subdivision) => radius - subStartOffset(i_subdivision);
+	let innerEndRadius = (i_subdivision) => radius - subEndOffset(i_subdivision);
+	let outerStartRadius = (i_subdivision) => radius + subStartOffset(i_subdivision);
+	let outerEndRadius = (i_subdivision) => radius + subEndOffset(i_subdivision);
 
 	let barrierGeometry = new THREE.Geometry();
 	let barrierWidth = (i_subdivision) => i_barrier.width;
-	let barrierInnerRadius = (i_subdivision) => 
+	let barrierInnerStartRadius = (i_subdivision) => 
 		i_isInner 
-			? innerRadius(i_subdivision) - barrierWidth(i_subdivision)
-			: outerRadius(i_subdivision);
-	let barrierOuterRadius = (i_subdivision) => 
+			? innerStartRadius(i_subdivision) - barrierWidth(i_subdivision)
+			: outerStartRadius(i_subdivision);
+	let barrierInnerEndRadius = (i_subdivision) => 
+		i_isInner 
+			? innerEndRadius(i_subdivision) - barrierWidth(i_subdivision)
+			: outerEndRadius(i_subdivision);
+	let barrierOuterStartRadius = (i_subdivision) => 
 		i_isInner
-			? innerRadius(i_subdivision)
-			: outerRadius(i_subdivision) + barrierWidth(i_subdivision);
+			? innerStartRadius(i_subdivision)
+			: outerStartRadius(i_subdivision) + barrierWidth(i_subdivision);
+	let barrierOuterEndRadius = (i_subdivision) => 
+		i_isInner
+			? innerEndRadius(i_subdivision)
+			: outerEndRadius(i_subdivision) + barrierWidth(i_subdivision);
 	
 	let angle = 0;
 	let partArc = i_barrier.segment.computePartDisplacement(i_part, new THREE.Vector3(), 0).rotation;
@@ -248,10 +263,10 @@ export let CurvePartBarrierGeometry =
 	for (let s = 0; s < subdivisions; ++s) {
 		let deltaAngle = partArc / subdivisions;
 
-		let is = getXYFromPolar(barrierInnerRadius(s), angle);
-		let ie = getXYFromPolar(barrierInnerRadius(s), angle + deltaAngle);
-		let os = getXYFromPolar(barrierOuterRadius(s), angle);
-		let oe = getXYFromPolar(barrierOuterRadius(s), angle + deltaAngle);
+		let is = getXYFromPolar(barrierInnerStartRadius(s), angle);
+		let ie = getXYFromPolar(barrierInnerEndRadius(s), angle + deltaAngle);
+		let os = getXYFromPolar(barrierOuterStartRadius(s), angle);
+		let oe = getXYFromPolar(barrierOuterEndRadius(s), angle + deltaAngle);
 
 		let vc = barrierGeometry.vertices.length;
 		barrierGeometry.vertices.push(...[
