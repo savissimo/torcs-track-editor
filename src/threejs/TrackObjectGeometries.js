@@ -227,12 +227,12 @@ export let CurvePartBarrierGeometry =
 
 	const radius = i_barrier.segment.getPartRadius(i_part);
 	const numberOfParts = i_barrier.segment.getNumberOfSteps();
-	const partStartOffset = i_startOffset + (i_endOffset - i_startOffset) * i_part / numberOfParts;
-	const partEndOffset = i_startOffset + (i_endOffset - i_startOffset) * (i_part + 1) / numberOfParts;
-	let subStartOffset = (i_subdivision) => partStartOffset + (partEndOffset - partStartOffset) * i_subdivision / subdivisions;
-	let subEndOffset = (i_subdivision) => partStartOffset + (partEndOffset - partStartOffset) * (i_subdivision + 1) / subdivisions;
-	//for (let i = 0; i < subdivisions; ++i) { console.log('Barrier ' + i_isInner + ' of ' + i_barrier.segment.name + ' offsetStart[' + i + ']: ' + subStartOffset(i)); }
-	//for (let i = 0; i < subdivisions; ++i) { console.log('Barrier ' + i_isInner + ' of ' + i_barrier.segment.name + ' offsetEnd[' + i + ']: ' + subEndOffset(i)); }
+	const deltaOffset = i_endOffset - i_startOffset;
+	const partStartOffset = i_startOffset + deltaOffset * i_part / numberOfParts;
+	const partEndOffset = i_startOffset + deltaOffset * (i_part + 1) / numberOfParts;
+	const deltaPartOffset = partEndOffset - partStartOffset;
+	let subStartOffset = (i_subdivision) => partStartOffset; // + deltaPartOffset * i_subdivision / subdivisions;
+	let subEndOffset = (i_subdivision) => partStartOffset; // + deltaPartOffset * (i_subdivision + 1) / subdivisions;
 	let innerStartRadius = (i_subdivision) => radius - subStartOffset(i_subdivision);
 	let innerEndRadius = (i_subdivision) => radius - subEndOffset(i_subdivision);
 	let outerStartRadius = (i_subdivision) => radius + subStartOffset(i_subdivision);
@@ -258,15 +258,29 @@ export let CurvePartBarrierGeometry =
 			: outerEndRadius(i_subdivision) + barrierWidth(i_subdivision);
 	
 	let angle = 0;
-	let partArc = i_barrier.segment.computePartDisplacement(i_part, new THREE.Vector3(), 0).rotation;
-
+	const partArc = i_barrier.segment.computePartDisplacement(i_part, new THREE.Vector3(), 0).rotation;
+	
+	
 	for (let s = 0; s < subdivisions; ++s) {
-		let deltaAngle = partArc / subdivisions;
+		const deltaAngle = partArc / subdivisions;
+		const innerStartRadius = barrierInnerStartRadius(s);
+		const outerStartRadius = barrierOuterStartRadius(s);
+		const deltaStartRadius = outerStartRadius - innerStartRadius;
+		const innerEndRadius = barrierInnerEndRadius(s);
+		const outerEndRadius = barrierOuterEndRadius(s);
+		const deltaEndRadius = outerEndRadius - innerEndRadius;
+		
+		const correctionShiftStart = getXYFromPolar(deltaStartRadius, angle + deltaAngle).multiplyScalar(s);
+		const correctionShiftEnd = getXYFromPolar(deltaEndRadius, angle + deltaAngle).multiplyScalar(s + 1);
 
-		let is = getXYFromPolar(barrierInnerStartRadius(s), angle);
-		let ie = getXYFromPolar(barrierInnerEndRadius(s), angle + deltaAngle);
-		let os = getXYFromPolar(barrierOuterStartRadius(s), angle);
-		let oe = getXYFromPolar(barrierOuterEndRadius(s), angle + deltaAngle);
+		let is = getXYFromPolar(innerStartRadius, angle);
+			is.subVectors(is, correctionShiftStart);
+		let ie = getXYFromPolar(innerEndRadius, angle + deltaAngle);
+			ie.subVectors(ie, correctionShiftEnd);
+		let os = getXYFromPolar(outerStartRadius, angle);
+			os.subVectors(os, correctionShiftStart);
+		let oe = getXYFromPolar(outerEndRadius, angle + deltaAngle);
+			oe.subVectors(oe, correctionShiftEnd);
 
 		let vc = barrierGeometry.vertices.length;
 		barrierGeometry.vertices.push(...[

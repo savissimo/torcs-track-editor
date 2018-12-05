@@ -45,7 +45,7 @@ const styles = theme => ({
 
 class SegmentOuterPartsEditor extends Component {
 	state = {
-		value: ''
+		value: false
 	};
 
 	handleChange(e, value) {
@@ -125,5 +125,4 @@ class SegmentOuterPartsEditor extends Component {
 	}
 };
 
-export default withStyles(styles)(SegmentOuterPartsEditor
-);
+export default withStyles(styles)(SegmentOuterPartsEditor);

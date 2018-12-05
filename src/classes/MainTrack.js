@@ -23,7 +23,12 @@ export default class MainTrack {
 
 	pits = new Pits();
 
+	track = undefined;
 	trackSegments = [];
+	
+	constructor(i_track) {
+		this.track = i_track;
+	}
 
 	loadTORCSXml(i_xmlNode) {
 		this.width = TORCSUtils.getNumericAttribute(i_xmlNode, 'width');

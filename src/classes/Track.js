@@ -7,7 +7,7 @@ import Segment from "./Segment";
 export default class Track {
 	header = new TrackHeader();
 	graphic = new TrackGraphic();
-	mainTrack = new MainTrack();
+	mainTrack = new MainTrack(this);
 	isDirty = false;
 
 	loadTORCSXml(i_xmlDocument) {
@@ -66,5 +66,24 @@ export default class Track {
 		}
 
 		return this.computeEndOfSegment(i_segment - 1);
+	}
+
+	getTotalLength() {
+		let retval = 0;
+		this.mainTrack.trackSegments.forEach(ts => { retval += ts.getLength(); });
+		return retval;
+	}
+
+	getTotalDelta() {
+		let retval = {
+			position: new THREE.Vector3(),
+			rotation: 0
+		};
+		this.mainTrack.trackSegments.forEach(ts => { 
+			let displacement = ts.computeDisplacement(new THREE.Vector3(), retval.rotation);
+			retval.rotation += displacement.rotation;
+			retval.position.addVectors(retval.position, displacement.position);
+		});
+		return retval;
 	}
 }

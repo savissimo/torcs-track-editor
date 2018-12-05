@@ -3,6 +3,7 @@ import Straight from '../classes/Straight';
 import Curve from '../classes/Curve';
 import Track from '../classes/Track';
 import { reverseFacesWindingOrder, StraightBorderGeometry, StraightSideGeometry, StraightBarrierGeometry, CurvePartBorderGeometry, CurvePartSideGeometry, CurvePartBarrierGeometry } from './TrackObjectGeometries';
+import Segment from '../classes/Segment';
 
 export default (i_track, i_segmentToHighlight) => {
 	const trackSegmentMaterial = new THREE.MeshStandardMaterial({ color: "#111", transparent: false, side: THREE.DoubleSide, shadowSide: THREE.CullFaceBack });
@@ -25,9 +26,9 @@ export default (i_track, i_segmentToHighlight) => {
 	if (i_track instanceof Track) {
 		return buildObjects(i_track, i_segmentToHighlight);
 	}
-	/*else if (i_track instanceof Segment) {
+	else if (i_track instanceof Segment) {
 		return createSegmentObject(i_track, true);
-	}*/
+	}
 	
 	function buildObjects(i_track, i_segmentToHighlight) {
 		let retval = new THREE.Group();
@@ -42,6 +43,7 @@ export default (i_track, i_segmentToHighlight) => {
 	}
 
 	function createSegmentObject(segment, i_highlight) {
+		console.log('creating 3D Object for segment ' + segment.name);
 		let segment3DObject = undefined;
 		if (segment instanceof Straight) {
 			segment3DObject = createStraightObject(segment, i_highlight);
@@ -75,7 +77,7 @@ export default (i_track, i_segmentToHighlight) => {
 		};
 
 		let retval = new THREE.Group();
-		let segmentStart = i_track.computeStartOfSegment(i_straightSegment);
+		let segmentStart = i_straightSegment.mainTrack.track.computeStartOfSegment(i_straightSegment);
 		let displacement = i_straightSegment.computeDisplacement(segmentStart.position, segmentStart.rotation);
 
 		let geometry = new THREE.PlaneGeometry(i_straightSegment.startWidth, i_straightSegment.length, 1, 1);
@@ -139,7 +141,7 @@ export default (i_track, i_segmentToHighlight) => {
 	
 	function createCurveObject(i_curveSegment, i_highlight) {
 		let retval = new THREE.Group();
-		let segmentStart = i_track.computeStartOfSegment(i_curveSegment);
+		let segmentStart = i_curveSegment.mainTrack.track.computeStartOfSegment(i_curveSegment);
 		//let displacement = i_curveSegment.computeDisplacement(segmentStart.position, segmentStart.rotation);
 		
 		let geometries = [];
