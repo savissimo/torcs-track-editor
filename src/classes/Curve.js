@@ -8,22 +8,69 @@ export default class Curve extends Segment {
 	endRadius = 20;
 
 	profilStepsLength = 4;
+
+	bakedValues = undefined;
 	
 	getLength() {
-		return (this.startRadius + this.endRadius) / 2 * (this.arc * Math.PI/180);
+		if (!this.bakedValues) { this.bake(); }
+		return this.bakedValues.totalLength;
 	}
 
 	getNumberOfSteps() {
-		return Math.ceil(this.getLength() / this.profilStepsLength);
+		if (!this.bakedValues) { this.bake(); }
+		return this.bakedValues.numberOfSteps;
 	}
 
 	getPartRadius(i_partIndex) {
-		//return i_partIndex < this.getNumberOfSteps()/2 ? this.startRadius : this.endRadius;
 		let ratio = this.getNumberOfSteps() === 1 
 			? 1
 			: 1.0 / (this.getNumberOfSteps() - 1)
 			;
 		return this.startRadius + (this.endRadius - this.startRadius) * i_partIndex * ratio;
+	}
+
+	getPartArc(i_partIndex) {
+		if (!this.bakedValues) { this.bake(); }
+		return this.bakedValues.stepLength / this.getPartRadius(i_partIndex) * (this.isRight ? -1 : 1) * 180/Math.PI;
+	}
+
+	getPartLength(i_partIndex) {
+		if (!this.bakedValues) { this.bake(); }
+		return this.bakedValues.stepLength;
+	}
+
+	setValue(field, value) {
+		this[field] = value;
+		this.bakedValues = undefined;
+	}
+
+	bake() {
+		const arcRad = this.arc * Math.PI/180;
+		const length = (this.startRadius + this.endRadius) / 2 * arcRad;
+		const stepsLength = this.profilStepsLength;
+		const steps = Math.floor(length / stepsLength) + 1;
+		
+		let curLength = length / steps;
+
+		if (this.endRadius !== this.startRadius) {
+			const dradius = (this.endRadius - this.startRadius) / ((steps - 1) || 1);
+			
+			let tmpAngle = 0;
+			let tmpRadius = this.startRadius;
+
+			for (let curStep = 0; curStep < steps; ++curStep) {
+				tmpAngle += curLength / tmpRadius;
+				tmpRadius += dradius;
+			}
+
+			curLength *= arcRad / tmpAngle;
+		}
+
+		this.bakedValues = {
+			totalLength: curLength * steps,
+			numberOfSteps: steps,
+			stepLength: curLength
+		};
 	}
 
 	computeDisplacement(i_initialPosition, i_initialAngleAroundZ) {
@@ -51,7 +98,7 @@ export default class Curve extends Segment {
 		let numSteps = this.getNumberOfSteps();
 
 		for (let p = 0; p <= i_part && p < numSteps; ++p) {
-			let partArc = totalArc / numSteps;
+			const partArc = this.getPartArc(p) * Math.PI/180;
 			partRotation = partArc;
 
 			let positionDelta = new THREE.Vector3();
