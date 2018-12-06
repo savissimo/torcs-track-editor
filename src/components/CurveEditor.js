@@ -5,7 +5,7 @@ import ValueSlidingEditor from "./ValueSlidingEditor";
 export default class CurveEditor extends Component {
 	handleChange = (field) => (value) => {
 		const segment = this.props.segment;
-		segment[field] = value;
+		segment.setValue(field, value);
 		this.props.onSegmentUpdated(segment);
 	}
 
