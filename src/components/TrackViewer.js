@@ -151,6 +151,11 @@ class TrackViewer extends Component {
 			else if (pickedObject instanceof Segment) {
 				this.props.onSegmentSelected(pickedObject);
 			}
+			else if (!pickedObject) {
+				if (this.props.selectedSegment) {
+					this.props.onSegmentSelected(undefined);
+				}
+			}
 
 		}	
 	}	
