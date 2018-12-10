@@ -20,7 +20,7 @@ import { withStyles, Tabs, Tab, Typography } from '@material-ui/core';
 import iconLeftBarrier from '../assets/icons/left-barrier.svg';
 import iconLeftSide from '../assets/icons/left-side.svg';
 import iconLeftBorder from '../assets/icons/left-border.svg';
-import iconSegment from '../assets/icons/segment.svg';
+//import iconSegment from '../assets/icons/segment.svg';
 import iconRightBorder from '../assets/icons/right-border.svg';
 import iconRightSide from '../assets/icons/right-side.svg';
 import iconRightBarrier from '../assets/icons/right-barrier.svg';

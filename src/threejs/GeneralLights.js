@@ -3,7 +3,7 @@ import * as THREE from 'three'
 export default scene => {    
 
     const ambientLight = new THREE.AmbientLight('#333');
-    const hemisphereLight = new THREE.HemisphereLight(0x0000ff, 0x44ff22, 0.6);
+    //const hemisphereLight = new THREE.HemisphereLight(0x0000ff, 0x44ff22, 0.6);
 
     const sunLight = new THREE.DirectionalLight("#fff", 1);
     sunLight.position.set(-1, .75, 1).normalize();

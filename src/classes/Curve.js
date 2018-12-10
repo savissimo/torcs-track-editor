@@ -89,7 +89,7 @@ export default class Curve extends Segment {
 	}
 
 	computePartDisplacement(i_part, i_initialPosition, i_initialAngleAroundZ) {
-		let totalArc = this.arc * (this.isRight ? -1 : 1) * Math.PI/180;
+		//let totalArc = this.arc * (this.isRight ? -1 : 1) * Math.PI/180;
 		let partPosition = new THREE.Vector3();
 		let partRotation = 0;
 		let totalRotation = i_initialAngleAroundZ;
