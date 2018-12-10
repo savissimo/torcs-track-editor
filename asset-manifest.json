@@ -1,0 +1,20 @@
+{
+  "main.js": "/static/js/main.9a911b8e.chunk.js",
+  "main.js.map": "/static/js/main.9a911b8e.chunk.js.map",
+  "static/js/1.c1a2db15.chunk.js": "/static/js/1.c1a2db15.chunk.js",
+  "static/js/1.c1a2db15.chunk.js.map": "/static/js/1.c1a2db15.chunk.js.map",
+  "runtime~main.js": "/static/js/runtime~main.229c360f.js",
+  "runtime~main.js.map": "/static/js/runtime~main.229c360f.js.map",
+  "static/media/straight.svg": "/static/media/straight.9829ae7d.svg",
+  "static/media/curve-left.svg": "/static/media/curve-left.284f4c36.svg",
+  "static/media/left-barrier.svg": "/static/media/left-barrier.e0f89871.svg",
+  "static/media/left-side.svg": "/static/media/left-side.532bf422.svg",
+  "static/media/left-border.svg": "/static/media/left-border.9bbbbe82.svg",
+  "static/media/right-border.svg": "/static/media/right-border.ae05dc41.svg",
+  "static/media/right-side.svg": "/static/media/right-side.f2712725.svg",
+  "static/media/right-barrier.svg": "/static/media/right-barrier.d737db36.svg",
+  "static/media/curve-right.svg": "/static/media/curve-right.b23ee55f.svg",
+  "index.html": "/index.html",
+  "precache-manifest.2dd3d07a9c62fc2f559e396c2bb7e114.js": "/precache-manifest.2dd3d07a9c62fc2f559e396c2bb7e114.js",
+  "service-worker.js": "/service-worker.js"
+}
