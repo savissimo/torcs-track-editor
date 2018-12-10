@@ -222,7 +222,7 @@ export let CurvePartBarrierGeometry =
 	let subdivisions = i_subdivisions || 4;
 
 	const radius = i_barrier.segment.getPartRadius(i_part);
-	const deltaPartOffset = i_startOffset - i_endOffset;
+	const deltaPartOffset = i_endOffset - i_startOffset;
 	let subStartOffset = (i_subdivision) => i_startOffset + deltaPartOffset * i_subdivision / subdivisions;
 	let subEndOffset = (i_subdivision) => i_startOffset + deltaPartOffset * (i_subdivision + 1) / subdivisions;
 	let innerStartRadius = (i_subdivision) => radius - subStartOffset(i_subdivision);
