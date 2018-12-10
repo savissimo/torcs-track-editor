@@ -31,7 +31,7 @@ export default class Curve extends Segment {
 
 	getPartArc(i_partIndex) {
 		if (!this.bakedValues) { this.bake(); }
-		return this.bakedValues.stepLength / this.getPartRadius(i_partIndex) * (this.isRight ? -1 : 1) * 180/Math.PI;
+		return this.bakedValues.stepLength / this.getPartRadius(i_partIndex) * (this.isRight ? -1 : 1);
 	}
 
 	getPartLength(i_partIndex) {
@@ -45,7 +45,7 @@ export default class Curve extends Segment {
 	}
 
 	bake() {
-		const arcRad = this.arc * Math.PI/180;
+		const arcRad = this.arc;
 		const length = (this.startRadius + this.endRadius) / 2 * arcRad;
 		const stepsLength = this.profilStepsLength;
 		const steps = Math.floor(length / stepsLength) + 1;
@@ -89,7 +89,7 @@ export default class Curve extends Segment {
 	}
 
 	computePartDisplacement(i_part, i_initialPosition, i_initialAngleAroundZ) {
-		//let totalArc = this.arc * (this.isRight ? -1 : 1) * Math.PI/180;
+		//let totalArc = this.arc * (this.isRight ? -1 : 1);
 		let partPosition = new THREE.Vector3();
 		let partRotation = 0;
 		let totalRotation = i_initialAngleAroundZ;
@@ -98,7 +98,7 @@ export default class Curve extends Segment {
 		let numSteps = this.getNumberOfSteps();
 
 		for (let p = 0; p <= i_part && p < numSteps; ++p) {
-			const partArc = this.getPartArc(p) * Math.PI/180;
+			const partArc = this.getPartArc(p);
 			partRotation = partArc;
 
 			let positionDelta = new THREE.Vector3();
