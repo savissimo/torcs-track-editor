@@ -156,9 +156,6 @@ export let CurvePartBorderGeometry =
 	}
 
 	borderGeometry.computeFaceNormals();
-	//if (!i_isInner) {
-		//reverseFacesWindingOrder(borderGeometry);
-	//}
 
 	return borderGeometry;
 };
@@ -176,7 +173,6 @@ export let CurvePartSideGeometry =
 	const partStartWidth = i_side.startWidth + (i_side.endWidth - i_side.startWidth) * i_part / numberOfParts;
 	const partEndWidth = i_side.startWidth + (i_side.endWidth - i_side.startWidth) * (i_part + 1) / numberOfParts;
 	let sideWidth = (i_subdivision) => partStartWidth + (partEndWidth - partStartWidth) * i_subdivision / subdivisions;
-	//for (let i = 0; i < subdivisions; ++i) { console.log('Side ' + i_isInner + ' of ' + i_side.segment.name + ' width[' + i + ']: ' + sideWidth(i)); }
 	let sideInnerRadius = (i_subdivision) => 
 		i_isInner 
 			? innerRadius - sideWidth(i_subdivision)
@@ -226,13 +222,9 @@ export let CurvePartBarrierGeometry =
 	let subdivisions = i_subdivisions || 4;
 
 	const radius = i_barrier.segment.getPartRadius(i_part);
-	const numberOfParts = i_barrier.segment.getNumberOfSteps();
-	const deltaOffset = i_endOffset - i_startOffset;
-	const partStartOffset = i_startOffset + deltaOffset * i_part / numberOfParts;
-	const partEndOffset = i_startOffset + deltaOffset * (i_part + 1) / numberOfParts;
-	const deltaPartOffset = partEndOffset - partStartOffset;
-	let subStartOffset = (i_subdivision) => partStartOffset; // + deltaPartOffset * i_subdivision / subdivisions;
-	let subEndOffset = (i_subdivision) => partStartOffset; // + deltaPartOffset * (i_subdivision + 1) / subdivisions;
+	const deltaPartOffset = i_startOffset - i_endOffset;
+	let subStartOffset = (i_subdivision) => i_startOffset + deltaPartOffset * i_subdivision / subdivisions;
+	let subEndOffset = (i_subdivision) => i_startOffset + deltaPartOffset * (i_subdivision + 1) / subdivisions;
 	let innerStartRadius = (i_subdivision) => radius - subStartOffset(i_subdivision);
 	let innerEndRadius = (i_subdivision) => radius - subEndOffset(i_subdivision);
 	let outerStartRadius = (i_subdivision) => radius + subStartOffset(i_subdivision);
@@ -258,29 +250,19 @@ export let CurvePartBarrierGeometry =
 			: outerEndRadius(i_subdivision) + barrierWidth(i_subdivision);
 	
 	let angle = 0;
-	const partArc = i_barrier.segment.computePartDisplacement(i_part, new THREE.Vector3(), 0).rotation;
-	
+	const partArc = i_barrier.segment.computePartDisplacement(i_part, new THREE.Vector3(), 0).rotation;	
 	
 	for (let s = 0; s < subdivisions; ++s) {
 		const deltaAngle = partArc / subdivisions;
 		const innerStartRadius = barrierInnerStartRadius(s);
 		const outerStartRadius = barrierOuterStartRadius(s);
-		const deltaStartRadius = outerStartRadius - innerStartRadius;
 		const innerEndRadius = barrierInnerEndRadius(s);
 		const outerEndRadius = barrierOuterEndRadius(s);
-		const deltaEndRadius = outerEndRadius - innerEndRadius;
 		
-		const correctionShiftStart = getXYFromPolar(deltaStartRadius, angle + deltaAngle).multiplyScalar(s);
-		const correctionShiftEnd = getXYFromPolar(deltaEndRadius, angle + deltaAngle).multiplyScalar(s + 1);
-
 		let is = getXYFromPolar(innerStartRadius, angle);
-			is.subVectors(is, correctionShiftStart);
 		let ie = getXYFromPolar(innerEndRadius, angle + deltaAngle);
-			ie.subVectors(ie, correctionShiftEnd);
 		let os = getXYFromPolar(outerStartRadius, angle);
-			os.subVectors(os, correctionShiftStart);
 		let oe = getXYFromPolar(outerEndRadius, angle + deltaAngle);
-			oe.subVectors(oe, correctionShiftEnd);
 
 		let vc = barrierGeometry.vertices.length;
 		barrierGeometry.vertices.push(...[
@@ -296,7 +278,7 @@ export let CurvePartBarrierGeometry =
 		barrierGeometry.faces.push(...[
 			new THREE.Face3(0 + vc, 2 + vc, 1 + vc), new THREE.Face3(0 + vc, 3 + vc, 2 + vc),
 			new THREE.Face3(4 + vc, 5 + vc, 6 + vc), new THREE.Face3(4 + vc, 6 + vc, 7 + vc),
-			new THREE.Face3(0 + vc, 1 + vc, 4 + vc), new THREE.Face3(0 + vc, 5 + vc, 4 + vc),
+			new THREE.Face3(0 + vc, 1 + vc, 5 + vc), new THREE.Face3(0 + vc, 5 + vc, 4 + vc),
 			new THREE.Face3(3 + vc, 7 + vc, 6 + vc), new THREE.Face3(3 + vc, 6 + vc, 2 + vc),
 			new THREE.Face3(0 + vc, 4 + vc, 7 + vc), new THREE.Face3(0 + vc, 7 + vc, 3 + vc),
 			new THREE.Face3(2 + vc, 6 + vc, 5 + vc), new THREE.Face3(2 + vc, 5 + vc, 1 + vc),
@@ -306,9 +288,10 @@ export let CurvePartBarrierGeometry =
 	}
 
 	barrierGeometry.computeFaceNormals();
-	//if (!i_isInner) {
-		//reverseFacesWindingOrder(barrierGeometry);
-	//}
 
 	return barrierGeometry;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+
