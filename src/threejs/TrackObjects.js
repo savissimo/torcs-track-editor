@@ -43,7 +43,6 @@ export default (i_track, i_segmentToHighlight) => {
 	}
 
 	function createSegmentObject(segment, i_highlight) {
-		console.log('creating 3D Object for segment ' + segment.name);
 		let segment3DObject = undefined;
 		if (segment instanceof Straight) {
 			segment3DObject = createStraightObject(segment, i_highlight);
@@ -171,7 +170,6 @@ export default (i_track, i_segmentToHighlight) => {
 				const deltaWidth = i_side.endWidth - i_side.startWidth;
 				rightOffsetStart += i_side.startWidth + deltaWidth / numberOfSteps * p;
 				rightOffsetEnd += i_side.startWidth + deltaWidth / numberOfSteps * (p + 1);
-				//console.log(i_curveSegment.name + ' part ' + p + ': ' + deltaWidth + ', ' + rightOffsetStart + ', ' + rightOffsetEnd);
 
 				let barrierGeometry = CurvePartBarrierGeometry(p, rightOffsetStart, rightOffsetEnd, i_barrier, i_isInner);
 	

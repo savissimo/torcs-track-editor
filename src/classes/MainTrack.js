@@ -86,7 +86,6 @@ export default class MainTrack {
 				}
 				return segment;
 			});
-		console.log(this.trackSegments);
 	}
 
 	insertSegmentAt(i_segment, i_insertionIndex) {
