@@ -25,6 +25,23 @@ export let reverseFacesWindingOrder = (i_geometry) => {
 	i_geometry.computeVertexNormals();
 }
 
+export let StraightTrackGeometry = (i_straightSegment) => {
+	let trackGeometry = new THREE.Geometry();
+	let sw2 = i_straightSegment.startWidth / 2.0;
+	let ew2 = i_straightSegment.endWidth / 2.0;
+	trackGeometry.vertices = [
+		new THREE.Vector3(-sw2, 0, 							0),
+		new THREE.Vector3(-ew2, i_straightSegment.length, 	0),
+		new THREE.Vector3(ew2, 	i_straightSegment.length, 	0),
+		new THREE.Vector3(sw2, 	0, 							0),
+	];
+	trackGeometry.faces = [
+		new THREE.Face3(0, 1, 2), new THREE.Face3(0, 2, 3)
+	];
+	trackGeometry.computeFaceNormals();
+	return trackGeometry;
+};
+
 export let StraightBorderGeometry = 
 	(i_startOffset, i_endOffset, i_border, i_isRight) => {
 	let borderGeometry = new THREE.Geometry();
@@ -44,7 +61,6 @@ export let StraightBorderGeometry =
 		new THREE.Face3(1, 2, 4), 
 	];
 	borderGeometry.computeFaceNormals();
-	borderGeometry.translate(0, -i_border.segment.length/2, 0);
 	if (!i_isRight) {
 		borderGeometry.scale(-1, 1, 1);
 		reverseFacesWindingOrder(borderGeometry);
@@ -64,7 +80,6 @@ export let StraightSideGeometry =
 	];
 	sideGeometry.faces = [ new THREE.Face3(0, 1, 2), new THREE.Face3(0, 2, 3) ];
 	sideGeometry.computeFaceNormals();
-	sideGeometry.translate(0, -i_side.segment.length/2, 0);
 	if (!i_isRight) {
 		sideGeometry.scale(-1, 1, 1);
 		reverseFacesWindingOrder(sideGeometry);
@@ -95,13 +110,55 @@ export let StraightBarrierGeometry =
 		new THREE.Face3(1, 6, 5), new THREE.Face3(1, 2, 6),
 	]
 	barrierGeometry.computeFaceNormals();
-	barrierGeometry.translate(0, -i_barrier.segment.length/2, 0);
 	if (!i_isRight) {
 		barrierGeometry.scale(-1, 1, 1);
 		reverseFacesWindingOrder(barrierGeometry);
 	}
 
 	return barrierGeometry;
+}
+
+export let CurvePartTrackGeometry = (i_curveSegment, i_partIndex, i_subdivisions) => {
+	let subdivisions = i_subdivisions || 4;
+	let partArc = i_curveSegment.getPartArc(i_partIndex);
+
+	let radius = i_curveSegment.getPartRadius(i_partIndex);
+	let innerRadius = radius - i_curveSegment.startWidth / 2;
+	let outerRadius = radius + i_curveSegment.startWidth / 2;
+
+	/*let trackGeometry = new THREE.RingGeometry(
+		innerRadius,
+		outerRadius,
+		1, 1, 0, partArc
+		);*/
+	let trackGeometry = new THREE.Geometry();
+	let angle = 0;
+	let deltaAngle = partArc / subdivisions;
+	for (let s = 0; s < subdivisions; ++s) {
+		let vc = trackGeometry.vertices.length;
+		let os = getXYFromPolar(outerRadius, angle);
+		let oe = getXYFromPolar(outerRadius, angle + deltaAngle);
+		let ie = getXYFromPolar(innerRadius, angle + deltaAngle);
+		let is = getXYFromPolar(innerRadius, angle);
+		trackGeometry.vertices.push(...[
+			new THREE.Vector3(os.x, os.y, 0),
+			new THREE.Vector3(oe.x, oe.y, 0),
+			new THREE.Vector3(ie.x, ie.y, 0),
+			new THREE.Vector3(is.x, is.y, 0),
+		]);
+		trackGeometry.faces.push(...[
+			new THREE.Face3(vc + 0, vc + 1, vc + 2), new THREE.Face3(vc + 0, vc + 2, vc + 3),
+		]);
+		angle += deltaAngle;
+	}
+	
+	trackGeometry.computeFaceNormals();
+	trackGeometry.rotateZ(i_curveSegment.isRight ? Math.PI/2 : - Math.PI/2);
+	if (i_curveSegment.isRight) {
+		reverseFacesWindingOrder(trackGeometry);
+	}
+
+	return trackGeometry;
 }
 
 export let CurvePartBorderGeometry = 
@@ -155,6 +212,7 @@ export let CurvePartBorderGeometry =
 		angle += deltaAngle;
 	}
 
+	borderGeometry.rotateZ(i_border.segment.isRight ? Math.PI/2 : - Math.PI/2);
 	borderGeometry.computeFaceNormals();
 
 	return borderGeometry;
@@ -209,6 +267,7 @@ export let CurvePartSideGeometry =
 		angle += deltaAngle;
 	}
 
+	sideGeometry.rotateZ(i_side.segment.isRight ? Math.PI/2 : - Math.PI/2);
 	sideGeometry.computeFaceNormals();
 	if (!i_side.segment.isRight) {
 		reverseFacesWindingOrder(sideGeometry);
@@ -287,6 +346,7 @@ export let CurvePartBarrierGeometry =
 		angle += deltaAngle;
 	}
 
+	barrierGeometry.rotateZ(i_barrier.segment.isRight ? Math.PI/2 : - Math.PI/2);
 	barrierGeometry.computeFaceNormals();
 
 	return barrierGeometry;

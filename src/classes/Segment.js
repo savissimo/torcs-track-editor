@@ -1,10 +1,19 @@
 export default class Segment {
 	mainTrack = undefined;
 	name = '';
-	startZ = 0;
-	endZ = 0;
 	startWidth = 10;
 	endWidth = 10;
+
+	zStart = 0;
+	zStartLeft = 0;
+	zStartRight = 0;
+	zEnd = 0;
+	zEndLeft = 0;
+	zEndRight = 0;
+	grade = 0;
+
+	bankingStart = 0;
+	bankingEnd = 0;
 	
 	m_surface = undefined;
 

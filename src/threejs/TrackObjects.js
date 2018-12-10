@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import Straight from '../classes/Straight';
 import Curve from '../classes/Curve';
 import Track from '../classes/Track';
-import { reverseFacesWindingOrder, StraightBorderGeometry, StraightSideGeometry, StraightBarrierGeometry, CurvePartBorderGeometry, CurvePartSideGeometry, CurvePartBarrierGeometry } from './TrackObjectGeometries';
+import { reverseFacesWindingOrder, StraightBorderGeometry, StraightSideGeometry, StraightBarrierGeometry, CurvePartBorderGeometry, CurvePartSideGeometry, CurvePartBarrierGeometry, StraightTrackGeometry, CurvePartTrackGeometry } from './TrackObjectGeometries';
 import Segment from '../classes/Segment';
 
 export default (i_track, i_segmentToHighlight) => {
@@ -77,9 +77,8 @@ export default (i_track, i_segmentToHighlight) => {
 
 		let retval = new THREE.Group();
 		let segmentStart = i_straightSegment.mainTrack.track.computeStartOfSegment(i_straightSegment);
-		let displacement = i_straightSegment.computeDisplacement(segmentStart.position, segmentStart.rotation);
 
-		let geometry = new THREE.PlaneGeometry(i_straightSegment.startWidth, i_straightSegment.length, 1, 1);
+		let geometry = new StraightTrackGeometry(i_straightSegment);
 
 		let [ leftBorderGeometry, leftSideGeometry, leftBarrierGeometry ] = 
 			getOuterGeometries(i_straightSegment.leftBorder(), i_straightSegment.leftSide(), i_straightSegment.leftBarrier(), false);
@@ -94,10 +93,11 @@ export default (i_track, i_segmentToHighlight) => {
 		];
 		
 		geometries.forEach(g => {
-			g.rotateZ(segmentStart.rotation - Math.PI/2);
-			g.translate(segmentStart.position.x + displacement.position.x/2, 
-				segmentStart.position.y + displacement.position.y/2, 
-				segmentStart.position.z + displacement.position.z/2);
+			g.rotateZ(-Math.PI/2);
+			/*g.rotateZ(segmentStart.rotation);
+			g.translate(segmentStart.position.x, 
+				segmentStart.position.y, 
+				segmentStart.position.z);*/
 			});
 
 		let trackMesh = new THREE.Mesh(geometry, trackSegmentMaterial);
@@ -134,75 +134,69 @@ export default (i_track, i_segmentToHighlight) => {
 
 		//retval.add(createText(i_straightSegment.name, findCenterPoint(geometry)));
 
+		retval.position.copy(segmentStart.position);
+		retval.rotation.z = segmentStart.rotation;
 		retval.userData = i_straightSegment;
 		return retval;
 	}
 	
 	function createCurveObject(i_curveSegment, i_highlight) {
 		let retval = new THREE.Group();
-		let segmentStart = i_curveSegment.mainTrack.track.computeStartOfSegment(i_curveSegment);
-		//let displacement = i_curveSegment.computeDisplacement(segmentStart.position, segmentStart.rotation);
-		
-		let geometries = [];
-		let borderGeometries = [];
-		let sideGeometries = [];
-		let barrierGeometries = [];
 		
 		let numberOfSteps = i_curveSegment.getNumberOfSteps();
 		let currentStartPosition = new THREE.Vector3();
-		currentStartPosition.copy(segmentStart.position);
-		let currentRotation = segmentStart.rotation;
+		let currentRotation = 0;
+
+		let mergedTrackGeometry = new THREE.Geometry();
+		let mergedLeftBorderGeometry = new THREE.Geometry();
+		let mergedRightBorderGeometry = new THREE.Geometry();
+		let mergedLeftSideGeometry = new THREE.Geometry();
+		let mergedRightSideGeometry = new THREE.Geometry();
+		let mergedLeftBarrierGeometry = new THREE.Geometry();
+		let mergedRightBarrierGeometry = new THREE.Geometry();
+
+		let mergeGeometries = (g, mergedGeometry) => {
+			let mesh = new THREE.Mesh(g);
+			mesh.updateMatrix();
+			mergedGeometry.merge(mesh.geometry, mesh.matrix);
+		};
+
+		let getOuterPartGeometries = (i_partIndex, i_border, i_side, i_barrier, i_isInner) => {
+
+			let rightOffsetStart = i_curveSegment.startWidth/2;
+			let rightOffsetEnd = rightOffsetStart;
+
+			let borderGeometry = CurvePartBorderGeometry(i_partIndex, rightOffsetStart, rightOffsetEnd, i_border, i_isInner, 1);
+
+			rightOffsetStart += i_border.width;
+			rightOffsetEnd += i_border.width;
+
+			let sideGeometry = CurvePartSideGeometry(i_partIndex, rightOffsetStart, rightOffsetEnd, i_side, i_isInner, 1);
+
+			const deltaWidth = i_side.endWidth - i_side.startWidth;
+			rightOffsetStart += i_side.startWidth + deltaWidth / numberOfSteps * i_partIndex;
+			rightOffsetEnd += i_side.startWidth + deltaWidth / numberOfSteps * (i_partIndex + 1);
+
+			let barrierGeometry = CurvePartBarrierGeometry(i_partIndex, rightOffsetStart, rightOffsetEnd, i_barrier, i_isInner, 1);
+
+			return [ borderGeometry, sideGeometry, barrierGeometry ];
+		};
+
 		for (let p = 0; p < numberOfSteps; ++p) {
-
-			// eslint-disable-next-line no-loop-func
-			let getOuterPartGeometries = (i_border, i_side, i_barrier, i_isInner) => {
-
-				let rightOffsetStart = i_curveSegment.startWidth/2;
-				let rightOffsetEnd = rightOffsetStart;
-
-				let borderGeometry = CurvePartBorderGeometry(p, rightOffsetStart, rightOffsetEnd, i_border, i_isInner);
-
-				rightOffsetStart += i_border.width;
-				rightOffsetEnd += i_border.width;
-
-				let sideGeometry = CurvePartSideGeometry(p, rightOffsetStart, rightOffsetEnd, i_side, i_isInner);
-
-				const deltaWidth = i_side.endWidth - i_side.startWidth;
-				rightOffsetStart += i_side.startWidth + deltaWidth / numberOfSteps * p;
-				rightOffsetEnd += i_side.startWidth + deltaWidth / numberOfSteps * (p + 1);
-
-				let barrierGeometry = CurvePartBarrierGeometry(p, rightOffsetStart, rightOffsetEnd, i_barrier, i_isInner);
-	
-				return [ borderGeometry, sideGeometry, barrierGeometry ];
-			};
-
-			let partDisplacement = i_curveSegment.computePartDisplacement(p, segmentStart.position, segmentStart.rotation);
-			let partArc = partDisplacement.rotation;
-			
-			let partDisplacementDelta = new THREE.Vector3();
-			partDisplacementDelta.subVectors(partDisplacement.position, segmentStart.position);
+			let partDisplacement = i_curveSegment.computePartDisplacement(p, new THREE.Vector3(), 0);
 			
 			let radius = i_curveSegment.getPartRadius(p);
-			let innerRadius = radius - i_curveSegment.startWidth / 2;
-			let outerRadius = radius + i_curveSegment.startWidth / 2;
 			let centerPosition = new THREE.Vector3(0, radius * (i_curveSegment.isRight ? -1 : 1), 0);
 			centerPosition.copy(centerPosition.applyAxisAngle(axisZ, currentRotation));
 			centerPosition.addVectors(centerPosition, currentStartPosition);
 			
-			let partGeometry = new THREE.RingGeometry(
-				innerRadius,
-				outerRadius,
-				1, 1, 0, partArc
-				);
-			if (i_curveSegment.isRight) {
-				reverseFacesWindingOrder(partGeometry);
-			}
+			let partGeometry = new CurvePartTrackGeometry(i_curveSegment, p, 1);
 
 			let [ leftBorderGeometry, leftSideGeometry, leftBarrierGeometry ] =
-				getOuterPartGeometries(i_curveSegment.leftBorder(), i_curveSegment.leftSide(), i_curveSegment.leftBarrier(), 
+				getOuterPartGeometries(p, i_curveSegment.leftBorder(), i_curveSegment.leftSide(), i_curveSegment.leftBarrier(), 
 				!i_curveSegment.isRight);
 			let [ rightBorderGeometry, rightSideGeometry, rightBarrierGeometry ] =
-				getOuterPartGeometries(i_curveSegment.rightBorder(), i_curveSegment.rightSide(), i_curveSegment.rightBarrier(), 
+				getOuterPartGeometries(p, i_curveSegment.rightBorder(), i_curveSegment.rightSide(), i_curveSegment.rightBarrier(), 
 				i_curveSegment.isRight);
 
 			let partGeometries = [
@@ -212,42 +206,40 @@ export default (i_track, i_segmentToHighlight) => {
 			]
 			// eslint-disable-next-line no-loop-func
 			partGeometries.forEach(g => {
-				g.rotateZ(currentRotation + (i_curveSegment.isRight ? Math.PI/2 : - Math.PI/2));
+				g.rotateZ(currentRotation);
 				g.translate(centerPosition.x, centerPosition.y, centerPosition.z);
 			});
-			geometries.push(partGeometry);
-			borderGeometries.push(leftBorderGeometry);
-			borderGeometries.push(rightBorderGeometry);
-			sideGeometries.push(leftSideGeometry);
-			sideGeometries.push(rightSideGeometry);
-			barrierGeometries.push(leftBarrierGeometry);
-			barrierGeometries.push(rightBarrierGeometry);
+
+			mergeGeometries(partGeometry, mergedTrackGeometry);
+			mergeGeometries(leftBorderGeometry, mergedLeftBorderGeometry);
+			mergeGeometries(rightBorderGeometry, mergedRightBorderGeometry);
+			mergeGeometries(leftSideGeometry, mergedLeftSideGeometry);
+			mergeGeometries(rightSideGeometry, mergedRightSideGeometry);
+			mergeGeometries(leftBarrierGeometry, mergedLeftBarrierGeometry);
+			mergeGeometries(rightBarrierGeometry, mergedRightBarrierGeometry);
 
 			currentStartPosition.addVectors(currentStartPosition, partDisplacement.position);
 			currentRotation += partDisplacement.rotation;
 		}
-
-		let mergedGeometry = new THREE.Geometry();
-		geometries.forEach(g => {
-			let mesh = new THREE.Mesh(g);
-			mesh.updateMatrix();
-			mergedGeometry.merge(mesh.geometry, mesh.matrix);
-		});
 		
-		let mergedEdgeGeometry = new THREE.EdgesGeometry(mergedGeometry);
+		let mergedEdgeGeometry = new THREE.EdgesGeometry(mergedTrackGeometry);
 		
-		let trackMesh = new THREE.Mesh(mergedGeometry, trackSegmentMaterial);
+		let trackMesh = new THREE.Mesh(mergedTrackGeometry, trackSegmentMaterial);
 		retval.add(trackMesh);
 		retval.add(new THREE.LineSegments(mergedEdgeGeometry, new THREE.LineBasicMaterial({ color: 0x4400ff })));
 
-		let meshes = [ trackMesh ];
-		borderGeometries.forEach(cg => { let mesh = new THREE.Mesh(cg, trackBorderMaterial); meshes.push(mesh); retval.add(mesh); });
-		sideGeometries.forEach(sg => { let mesh = new THREE.Mesh(sg, trackSideMaterial); meshes.push(mesh); retval.add(mesh); });
-		barrierGeometries.forEach(bg => { let mesh = new THREE.Mesh(bg, trackBarrierMaterial); meshes.push(mesh); retval.add(mesh); });
+		let leftBorderMesh = new THREE.Mesh(mergedLeftBorderGeometry, trackBorderMaterial);
+		let leftSideMesh = new THREE.Mesh(mergedLeftSideGeometry, trackSideMaterial);
+		let leftBarrierMesh = new THREE.Mesh(mergedLeftBarrierGeometry, trackBarrierMaterial);
+		let rightBorderMesh = new THREE.Mesh(mergedRightBorderGeometry, trackBorderMaterial);
+		let rightSideMesh = new THREE.Mesh(mergedRightSideGeometry, trackSideMaterial);
+		let rightBarrierMesh = new THREE.Mesh(mergedRightBarrierGeometry, trackBarrierMaterial);
+		let meshes = [ trackMesh, leftBorderMesh, leftSideMesh, leftBarrierMesh, rightBorderMesh, rightSideMesh, rightBarrierMesh ];
 
 		meshes.forEach(m => {
 			m.castShadow = true;
 			m.receiveShadow = true;
+			retval.add(m);
 		})
 
         //let vnh = new THREE.VertexNormalsHelper( mesh, 10, 0x00ff00, 10 );
@@ -256,9 +248,13 @@ export default (i_track, i_segmentToHighlight) => {
 		//retval.add(fnh);
 		
 		if (i_highlight) {
-			retval.add(new THREE.Mesh(mergedGeometry, trackSegmentHighlightMaterial));
+			retval.add(new THREE.Mesh(mergedTrackGeometry, trackSegmentHighlightMaterial));
 			retval.add(new THREE.LineSegments(mergedEdgeGeometry, new THREE.LineBasicMaterial({ color: 0xdd6600, linewidth: 5 })));
 		}
+
+		let segmentStart = i_curveSegment.mainTrack.track.computeStartOfSegment(i_curveSegment);
+		retval.position.copy(segmentStart.position);
+		retval.rotation.z = segmentStart.rotation;
 
 		retval.userData = i_curveSegment;
 		return retval;

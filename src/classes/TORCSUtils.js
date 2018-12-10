@@ -1,6 +1,6 @@
 export default class TORCSUtils {
-	static getStringAttribute(i_xmlNode, i_key) {
-		if (!i_xmlNode) { return ''; }
+	static getStringAttribute(i_xmlNode, i_key, i_defaultValue) {
+		if (!i_xmlNode) { return i_defaultValue; }
 		let attribute = i_xmlNode.querySelector('attstr[name="' + i_key + '"]');
 		if (attribute && attribute.parentElement === i_xmlNode) {
 			return attribute.getAttribute('val') + '';
@@ -8,8 +8,8 @@ export default class TORCSUtils {
 		return undefined;
 	}
 
-	static getNumericAttribute(i_xmlNode, i_key) {
-		if (!i_xmlNode) { return 0; }
+	static getNumericAttribute(i_xmlNode, i_key, i_defaultValue) {
+		if (!i_xmlNode) { return i_defaultValue; }
 		let attribute = i_xmlNode.querySelector('attnum[name="' + i_key + '"]');
 		if (attribute && attribute.parentElement === i_xmlNode) {
 			let value = Number(attribute.getAttribute('val'));
