@@ -39,6 +39,9 @@ export default class MainTrack {
 		let trackSegmentsNode = i_xmlNode.querySelector('section[name="Track Segments"]');
 		let trackSegmentNodes = [...trackSegmentsNode.children];
 		let theTrack = this;
+
+		let zsr, zsl, zer, zel = 0;
+
 		this.trackSegments = trackSegmentNodes
 			.filter((child) => child.nodeName === 'section')
 			.map((tsNode) => {
@@ -69,18 +72,43 @@ export default class MainTrack {
 					segment.startWidth = theTrack.width;
 					segment.endWidth = theTrack.width;
 
-					segment.zStartLeft = TORCSUtils.getNumericAttribute(tsNode, 'z start left', 0);
-					segment.zStartRight = TORCSUtils.getNumericAttribute(tsNode, 'z start right', 0);
-					segment.zEndRight = TORCSUtils.getNumericAttribute(tsNode, 'z end right', 0);
-					segment.zEndLeft = TORCSUtils.getNumericAttribute(tsNode, 'z end left', 0);
-					segment.zStart = TORCSUtils.getNumericAttribute(tsNode, 'z start', (segment.zStartLeft + segment.zStartRight) / 2.0);
-					segment.zEnd = TORCSUtils.getNumericAttribute(tsNode, 'z end', (segment.zEndLeft + segment.zEndRight) / 2.0);
-					segment.grade = TORCSUtils.getNumericAttribute(tsNode, 'grade', 0);
-
+					segment.zStartLeft = TORCSUtils.getNumericAttribute(tsNode, 'z start left', zsl);
+					segment.zStartRight = TORCSUtils.getNumericAttribute(tsNode, 'z start right', zsr);
+					segment.zEndLeft = TORCSUtils.getNumericAttribute(tsNode, 'z end left', zel);
+					segment.zEndRight = TORCSUtils.getNumericAttribute(tsNode, 'z end right', zer);
+					segment.zStart = TORCSUtils.getNumericAttribute(tsNode, 'z start');
+					segment.zEnd = TORCSUtils.getNumericAttribute(tsNode, 'z end');
+					segment.grade = TORCSUtils.getNumericAttribute(tsNode, 'grade');
+					
+					if (segment.zStart !== undefined) {
+						segment.zStartLeft = segment.zStartRight = segment.zStart;
+					}
+					else {
+						segment.zStart = (segment.zStartLeft + segment.zStartRight) / 2.0;
+					}
+					if (segment.zEnd !== undefined) {
+						segment.zEndLeft = segment.zEndRight = segment.zEnd;
+					}
+					else if (segment.grade !== undefined) {
+						segment.zEnd = segment.zStart + segment.getLength() * segment.grade;
+					}
+					else {
+						segment.zEnd = (segment.zEndLeft + segment.zEndRight) / 2.0;
+					}
+					
 					segment.bankingStart = TORCSUtils.getNumericAttribute(tsNode, 'banking start', 
 						Math.atan2(segment.zStartLeft - segment.zStartRight, segment.startWidth));
 					segment.bankingEnd = TORCSUtils.getNumericAttribute(tsNode, 'banking end', 
 						Math.atan2(segment.zEndLeft - segment.zEndRight, segment.endWidth));
+					
+					const dzStart = Math.tan(segment.bankingStart) * segment.startWidth / 2.0;
+					const dzEnd = Math.tan(segment.bankingEnd) * segment.endWidth / 2.0;
+					segment.zStartLeft = segment.zStart + dzStart;
+					segment.zStartRight = segment.zStart - dzStart;
+					zsl = segment.zEndLeft = segment.zEnd + dzEnd;
+					zsr = segment.zEndRight = segment.zEnd - dzEnd;
+					console.log(`Segment ${segment.name}: ${segment.zStartLeft} ${segment.zStartRight} ${segment.zEndLeft} ${segment.zEndRight}`);
+
 
 					let lcNode = tsNode.querySelector('section[name="Left Border"]');
 					if (lcNode) {

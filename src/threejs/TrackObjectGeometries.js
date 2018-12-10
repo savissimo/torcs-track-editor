@@ -30,10 +30,10 @@ export let StraightTrackGeometry = (i_straightSegment) => {
 	let sw2 = i_straightSegment.startWidth / 2.0;
 	let ew2 = i_straightSegment.endWidth / 2.0;
 	trackGeometry.vertices = [
-		new THREE.Vector3(-sw2, 0, 							0),
-		new THREE.Vector3(-ew2, i_straightSegment.length, 	0),
-		new THREE.Vector3(ew2, 	i_straightSegment.length, 	0),
-		new THREE.Vector3(sw2, 	0, 							0),
+		new THREE.Vector3(-sw2, 0, 							i_straightSegment.zStartLeft),
+		new THREE.Vector3(-ew2, i_straightSegment.length, 	i_straightSegment.zEndLeft),
+		new THREE.Vector3(ew2, 	i_straightSegment.length, 	i_straightSegment.zEndRight),
+		new THREE.Vector3(sw2, 	0, 							i_straightSegment.zStartRight),
 	];
 	trackGeometry.faces = [
 		new THREE.Face3(0, 1, 2), new THREE.Face3(0, 2, 3)
@@ -45,13 +45,23 @@ export let StraightTrackGeometry = (i_straightSegment) => {
 export let StraightBorderGeometry = 
 	(i_startOffset, i_endOffset, i_border, i_isRight) => {
 	let borderGeometry = new THREE.Geometry();
+	if (i_border.width === 0) { return borderGeometry; }
+
+	const segment = i_border.segment;
+	
+	const zStartInner = i_isRight ? segment.zStartRight : segment.zStartLeft;
+	const zEndInner = i_isRight ? segment.zEndRight : segment.zEndLeft;
+	const positiveBanking = i_isRight ? -1 : 1;
+	const zStartOuter = zStartInner + Math.tan(segment.bankingStart) * positiveBanking * i_border.width;
+	const zEndOuter = zEndInner + Math.tan(segment.bankingStart) * positiveBanking * i_border.width;
+
 	borderGeometry.vertices = [
-		new THREE.Vector3(i_startOffset + 0,              0,                       0),
-		new THREE.Vector3(i_endOffset   + 0,              i_border.segment.length, 0),
-		new THREE.Vector3(i_endOffset   + i_border.width, i_border.segment.length, i_border.height),
-		new THREE.Vector3(i_startOffset + i_border.width, 0,                       i_border.height),
-		new THREE.Vector3(i_endOffset   + i_border.width, i_border.segment.length, 0),
-		new THREE.Vector3(i_startOffset + i_border.width, 0,                       0)
+		new THREE.Vector3(i_startOffset + 0,              0,              zStartInner),
+		new THREE.Vector3(i_endOffset   + 0,              segment.length, zEndInner),
+		new THREE.Vector3(i_endOffset   + i_border.width, segment.length, zEndOuter + i_border.height),
+		new THREE.Vector3(i_startOffset + i_border.width, 0,              zStartOuter + i_border.height),
+		new THREE.Vector3(i_endOffset   + i_border.width, segment.length, zEndOuter),
+		new THREE.Vector3(i_startOffset + i_border.width, 0,              zStartOuter)
 	];
 	borderGeometry.faces = [ 
 		new THREE.Face3(0, 1, 2), new THREE.Face3(0, 2, 3), 
@@ -72,11 +82,21 @@ export let StraightBorderGeometry =
 export let StraightSideGeometry = 
 	(i_startOffset, i_endOffset, i_side, i_isRight) => {
 	let sideGeometry = new THREE.Geometry();
+	if (i_side.width === 0) { return sideGeometry; }
+
+	const segment = i_side.segment;
+	
+	const positiveBanking = i_isRight ? -1 : 1;
+	const zStartInner = segment.zStart + Math.tan(segment.bankingStart * positiveBanking) * i_startOffset; 
+	const zStartOuter = segment.zStart + Math.tan(segment.bankingStart * positiveBanking) * (i_startOffset + i_side.startWidth); 
+	const zEndInner =   segment.zEnd   + Math.tan(segment.bankingEnd * positiveBanking)   * i_endOffset; 
+	const zEndOuter =   segment.zEnd   + Math.tan(segment.bankingEnd * positiveBanking)   * (i_endOffset + i_side.endWidth); 
+
 	sideGeometry.vertices = [
-		new THREE.Vector3(i_startOffset + 0,                 0,                     0),
-		new THREE.Vector3(i_endOffset   + 0,                 i_side.segment.length, 0),
-		new THREE.Vector3(i_endOffset   + i_side.endWidth,   i_side.segment.length, 0),
-		new THREE.Vector3(i_startOffset + i_side.startWidth, 0,                     0)
+		new THREE.Vector3(i_startOffset + 0,                 0,              zStartInner),
+		new THREE.Vector3(i_endOffset   + 0,                 segment.length, zEndInner),
+		new THREE.Vector3(i_endOffset   + i_side.endWidth,   segment.length, zEndOuter),
+		new THREE.Vector3(i_startOffset + i_side.startWidth, 0,              zStartOuter)
 	];
 	sideGeometry.faces = [ new THREE.Face3(0, 1, 2), new THREE.Face3(0, 2, 3) ];
 	sideGeometry.computeFaceNormals();
@@ -91,15 +111,25 @@ export let StraightSideGeometry =
 export let StraightBarrierGeometry = 
 	(i_startOffset, i_endOffset, i_barrier, i_isRight) => {
 	let barrierGeometry = new THREE.Geometry();
+	if (i_barrier.width === 0) { return barrierGeometry; }
+
+	const segment = i_barrier.segment;
+	
+	const positiveBanking = i_isRight ? -1 : 1;
+	const zStartInner = segment.zStart + Math.tan(segment.bankingStart * positiveBanking) * i_startOffset; 
+	const zStartOuter = segment.zStart + Math.tan(segment.bankingStart * positiveBanking) * (i_startOffset + i_barrier.width); 
+	const zEndInner =   segment.zEnd   + Math.tan(segment.bankingEnd * positiveBanking)   * i_endOffset; 
+	const zEndOuter =   segment.zEnd   + Math.tan(segment.bankingEnd * positiveBanking)   * (i_endOffset + i_barrier.width); 
+
 	barrierGeometry.vertices = [
-		new THREE.Vector3(i_startOffset + 0,               0,                        0),
-		new THREE.Vector3(i_endOffset   + 0,               i_barrier.segment.length, 0),
-		new THREE.Vector3(i_endOffset   + i_barrier.width, i_barrier.segment.length, 0),
-		new THREE.Vector3(i_startOffset + i_barrier.width, 0,                        0),
-		new THREE.Vector3(i_startOffset + 0,               0,                        i_barrier.height),
-		new THREE.Vector3(i_endOffset   + 0,               i_barrier.segment.length, i_barrier.height),
-		new THREE.Vector3(i_endOffset   + i_barrier.width, i_barrier.segment.length, i_barrier.height),
-		new THREE.Vector3(i_startOffset + i_barrier.width, 0,                        i_barrier.height),
+		new THREE.Vector3(i_startOffset + 0,               0,              zStartInner + 0),
+		new THREE.Vector3(i_endOffset   + 0,               segment.length, zEndInner + 0),
+		new THREE.Vector3(i_endOffset   + i_barrier.width, segment.length, zEndOuter + 0),
+		new THREE.Vector3(i_startOffset + i_barrier.width, 0,              zStartOuter + 0),
+		new THREE.Vector3(i_startOffset + 0,               0,              zStartInner + i_barrier.height),
+		new THREE.Vector3(i_endOffset   + 0,               segment.length, zEndInner + i_barrier.height),
+		new THREE.Vector3(i_endOffset   + i_barrier.width, segment.length, zEndOuter + i_barrier.height),
+		new THREE.Vector3(i_startOffset + i_barrier.width, 0,              zStartOuter + i_barrier.height),
 	];
 	barrierGeometry.faces = [
 		new THREE.Face3(2, 1, 0), new THREE.Face3(3, 2, 0),
