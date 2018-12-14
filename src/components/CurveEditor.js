@@ -15,8 +15,8 @@ export default class CurveEditor extends Component {
 			<div>
 				<div>
 					<Typography id="lblArc">Arc</Typography>
-					<ValueSlidingEditor value={segment.arc} min={0} max={360} step={0.1} 
-						onChange={v => this.handleChange('arc')(v)} />
+					<ValueSlidingEditor value={segment.arc * 180/Math.PI} min={0} max={360} step={0.1} 
+						onChange={v => this.handleChange('arc')(v * Math.PI/180)} />
 				</div>
 				<div>
 					<Typography id="lblStartRadius">Start radius</Typography>

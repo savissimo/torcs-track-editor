@@ -9,6 +9,7 @@ import iconCurveLeft from '../assets/icons/curve-left.svg';
 import StraightEditor from "./StraightEditor";
 import CurveEditor from "./CurveEditor";
 import SegmentOuterPartsEditor from "./SegmentOuterPartsEditor";
+import SegmentCommonEditor from "./SegmentCommonEditor";
 
 export default class SegmentEditor extends Component {
 	constructor(props) {
@@ -46,6 +47,7 @@ export default class SegmentEditor extends Component {
 		}
 		const segmentLength = this.props.segment.getLength();
 		return (
+			<React.Fragment>
 			<Card>
 				<CardContent>
 					<CardHeader
@@ -58,11 +60,14 @@ export default class SegmentEditor extends Component {
 						}
 						/>
 					{segmentProperties}
+					<SegmentCommonEditor segment={this.props.segment} 
+						onSegmentUpdated={(s) => this.handleSegmentUpdated(s)} />
 					<SegmentOuterPartsEditor segment={this.props.segment} 
 						onSegmentUpdated={(s) => this.handleSegmentUpdated(s)}
 						/>
 				</CardContent>
 			</Card>
+			</React.Fragment>
 		);
 	}
 }

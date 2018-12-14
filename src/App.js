@@ -125,7 +125,7 @@ class App extends Component {
   updateSegment = (segment) => {
     const newTrack = lodash.clone(this.state.currentTrack);
     //const selectedSegment = newTrack.findMainTrackSegment(segment);
-    this.setState({ currentTrack: newTrack });
+    this.setState({ currentTrack: newTrack, selectedSegment: segment });
   };
 
   render() {

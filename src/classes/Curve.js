@@ -3,22 +3,22 @@ import * as THREE from 'three';
 
 export default class Curve extends Segment {
 	isRight = true;
-	arc = 90;
+	arc = 90 * Math.PI/180;
 	startRadius = 20;
 	endRadius = 20;
 
 	profilStepsLength = 4;
 
-	bakedValues = undefined;
+	bakedCurveValues = undefined;
 	
 	getLength() {
-		if (!this.bakedValues) { this.bake(); }
-		return this.bakedValues.totalLength;
+		if (!this.bakedCurveValues) { this.bakeCurve(); }
+		return this.bakedCurveValues.totalLength;
 	}
 
 	getNumberOfSteps() {
-		if (!this.bakedValues) { this.bake(); }
-		return this.bakedValues.numberOfSteps;
+		if (!this.bakedCurveValues) { this.bakeCurve(); }
+		return this.bakedCurveValues.numberOfSteps;
 	}
 
 	getPartRadius(i_partIndex) {
@@ -30,21 +30,24 @@ export default class Curve extends Segment {
 	}
 
 	getPartArc(i_partIndex) {
-		if (!this.bakedValues) { this.bake(); }
-		return this.bakedValues.stepLength / this.getPartRadius(i_partIndex) * (this.isRight ? -1 : 1);
+		if (!this.bakedCurveValues) { this.bakeCurve(); }
+		return this.bakedCurveValues.stepLength / this.getPartRadius(i_partIndex) * (this.isRight ? -1 : 1);
 	}
 
 	getPartLength(i_partIndex) {
-		if (!this.bakedValues) { this.bake(); }
-		return this.bakedValues.stepLength;
+		if (!this.bakedCurveValues) { this.bakeCurve(); }
+		return this.bakedCurveValues.stepLength;
 	}
 
 	setValue(field, value) {
+		super.setValue(field, value);
+
+		if (['arc','startRadius','endRadius','profilStepsLength'].indexOf(field) < 0) return;
 		this[field] = value;
-		this.bakedValues = undefined;
+		this.bakedCurveValues = undefined;
 	}
 
-	bake() {
+	bakeCurve() {
 		const arcRad = this.arc;
 		const length = (this.startRadius + this.endRadius) / 2 * arcRad;
 		const stepsLength = this.profilStepsLength;
@@ -66,7 +69,7 @@ export default class Curve extends Segment {
 			curLength *= arcRad / tmpAngle;
 		}
 
-		this.bakedValues = {
+		this.bakedCurveValues = {
 			totalLength: curLength * steps,
 			numberOfSteps: steps,
 			stepLength: curLength

@@ -123,14 +123,14 @@ export default canvas => {
 
     function updateSelectedSegment(i_segment) {
         selectedSegment = i_segment;
-        //updateTrack();
-        if (selectedSegment3DObject) {
+        updateTrack();
+        /*if (selectedSegment3DObject) {
             scene.remove(selectedSegment3DObject);
         }
         selectedSegment3DObject = TrackObjects(selectedSegment);
         if (selectedSegment3DObject) {
             scene.add(selectedSegment3DObject);
-        }
+        }*/
     }
 
     function clearHookMode() {
