@@ -13,9 +13,9 @@ export default class SegmentBorder {
 	}
 
 	loadTORCSXml(i_xmlNode) {
-		this.width = TORCSUtils.getNumericAttribute(i_xmlNode, 'width');
-		this.height = TORCSUtils.getNumericAttribute(i_xmlNode, 'height');
-		this.surface = TORCSUtils.getStringAttribute(i_xmlNode, 'surface');
-		this.style = TORCSUtils.getStringAttribute(i_xmlNode, 'style');
+		this.width = TORCSUtils.getNumericAttribute(i_xmlNode, 'width', 0);
+		this.height = TORCSUtils.getNumericAttribute(i_xmlNode, 'height', 0);
+		this.surface = TORCSUtils.getStringAttribute(i_xmlNode, 'surface', 'grass');
+		this.style = TORCSUtils.getStringAttribute(i_xmlNode, 'style', 'plan');
 	}
 }

@@ -4,6 +4,7 @@ export default class SegmentSide {
 	startWidth = 4;
 	endWidth = 4;
 	surface = 'grass';
+	bankingType = 'level';
 
 	segment = undefined;
 
@@ -13,7 +14,8 @@ export default class SegmentSide {
 
 	loadTORCSXml(i_xmlNode) {
 		this.startWidth = TORCSUtils.getNumericAttribute(i_xmlNode, 'start width');
-		this.endWidth = TORCSUtils.getNumericAttribute(i_xmlNode, 'end width');
-		this.surface = TORCSUtils.getStringAttribute(i_xmlNode, 'surface');
+		this.endWidth = TORCSUtils.getNumericAttribute(i_xmlNode, 'end width', 0);
+		this.surface = TORCSUtils.getStringAttribute(i_xmlNode, 'surface', 'grass');
+		this.bankingType = TORCSUtils.getStringAttribute(i_xmlNode, 'banking type', 'level');
 	}
 }

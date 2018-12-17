@@ -4,7 +4,7 @@ export default class SegmentBarrier {
 	width = 0.1;
 	height = 1;
 	surface = 'barrier';
-	style = 'curb';
+	style = 'fence';
 
 	segment = undefined;
 
@@ -13,9 +13,11 @@ export default class SegmentBarrier {
 	}
 
 	loadTORCSXml(i_xmlNode) {
-		this.width = TORCSUtils.getNumericAttribute(i_xmlNode, 'width');
-		this.height = TORCSUtils.getNumericAttribute(i_xmlNode, 'height');
-		this.surface = TORCSUtils.getStringAttribute(i_xmlNode, 'surface');
-		this.style = TORCSUtils.getStringAttribute(i_xmlNode, 'style');
+		this.height = TORCSUtils.getNumericAttribute(i_xmlNode, 'height', 0.6);
+		this.surface = TORCSUtils.getStringAttribute(i_xmlNode, 'surface', 'barrier');
+		this.style = TORCSUtils.getStringAttribute(i_xmlNode, 'style', 'fence');
+		this.width = this.style === 'fence'
+			? 0
+			: TORCSUtils.getNumericAttribute(i_xmlNode, 'width');
 	}
 }
