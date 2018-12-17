@@ -81,7 +81,7 @@ export default canvas => {
     function buildCameras({ width, height }) {
         const aspectRatio = width / height;
         let viewRange = 200;
-        const orthogonalCamera = new THREE.OrthographicCamera(-viewRange, viewRange, viewRange/aspectRatio, -viewRange/aspectRatio, 100, -100);
+        const orthogonalCamera = new THREE.OrthographicCamera(-viewRange, viewRange, viewRange/aspectRatio, -viewRange/aspectRatio, -100, 100);
 
         const fieldOfView = 40;
         const nearPlane = 2;
