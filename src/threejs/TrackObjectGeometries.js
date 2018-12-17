@@ -290,13 +290,16 @@ export let CurvePartBorderGeometry =
 export let CurvePartSideGeometry = 
 	(i_part, i_startOffset, i_endOffset, i_side, i_isInner, i_subdivisions) => {
 	const subdivisions = i_subdivisions || 4;
+	const segment = i_side.segment;
 
-	const radius = i_side.segment.getPartRadius(i_part);
+	const radius = segment.getPartRadius(i_part);
 	const innerRadius = radius - i_startOffset;
 	const outerRadius = radius + i_startOffset;
 
 	let sideGeometry = new THREE.Geometry();
-	const numberOfParts = i_side.segment.getNumberOfSteps();
+	if (i_side.startWidth === 0 && i_side.endWidth === 0) { return sideGeometry; }
+
+	const numberOfParts = segment.getNumberOfSteps();
 	const partStartWidth = i_side.startWidth + (i_side.endWidth - i_side.startWidth) * i_part / numberOfParts;
 	const partEndWidth = i_side.startWidth + (i_side.endWidth - i_side.startWidth) * (i_part + 1) / numberOfParts;
 	let sideWidth = (i_subdivision) => partStartWidth + (partEndWidth - partStartWidth) * i_subdivision / subdivisions;
@@ -312,9 +315,29 @@ export let CurvePartSideGeometry =
 	let sideOuterEndRadius = (i_subdivision) => sideOuterRadius(i_subdivision + 1);
 	
 	let angle = 0;
-	let partArc = i_side.segment.computePartDisplacement(i_part, new THREE.Vector3(), 0).rotation;
+	let partArc = segment.computePartDisplacement(i_part, new THREE.Vector3(), 0).rotation;
 
+	const deltaZ = (segment.getZEnd() - segment.getZStart()) / segment.getNumberOfSteps();
+	const partZStart = segment.getZStart() + deltaZ * i_part;
+	const deltaSubZ = deltaZ / subdivisions;
+	const zStart = (s) => partZStart + deltaSubZ * s;
+	const zEnd = (s) => zStart(s + 1);
+	
+	const deltaBanking = (segment.getBankingEnd() - segment.getBankingStart()) / segment.getNumberOfSteps();
+	const partStartBanking = segment.getBankingStart() + deltaBanking * i_part;
+	const partEndBanking = segment.getBankingStart() + deltaBanking * (i_part + 1);
+	const deltaSubBanking = (partEndBanking - partStartBanking) / subdivisions;
+	const subStartBanking = (s) => partStartBanking + deltaSubBanking * s;
+	const subEndBanking = (s) => subStartBanking(s + 1);
+
+	const positiveBanking = segment.isRight ? 1 : -1;
+	const zStartInner = (s) => zStart(s) + Math.tan(subStartBanking(s) * positiveBanking) * (sideInnerRadius(s) - radius); 
+	const zStartOuter = (s) => zStart(s) + Math.tan(subStartBanking(s) * positiveBanking) * (sideOuterRadius(s) - radius); 
+	const zEndInner =   (s) => zEnd(s)   + Math.tan(subEndBanking(s)   * positiveBanking) * (sideInnerEndRadius(s) - radius); 
+	const zEndOuter =   (s) => zEnd(s)   + Math.tan(subEndBanking(s)   * positiveBanking) * (sideOuterEndRadius(s) - radius); 
+	
 	for (let s = 0; s < subdivisions; ++s) {
+		//console.log(`${segment.name} ${zStart(s)} + tan(${subStartBanking(s)*positiveBanking*180/Math.PI}) * ${sideInnerRadius(s)} = ${zStartInner(s)}`);
 		let deltaAngle = partArc / subdivisions;
 
 		let is = getXYFromPolar(sideInnerRadius(s), angle);
@@ -324,10 +347,10 @@ export let CurvePartSideGeometry =
 
 		let vc = sideGeometry.vertices.length;
 		sideGeometry.vertices.push(...[
-			new THREE.Vector3(is.x, is.y, 0),
-			new THREE.Vector3(ie.x, ie.y, 0),
-			new THREE.Vector3(oe.x, oe.y, 0),
-			new THREE.Vector3(os.x, os.y, 0),
+			new THREE.Vector3(is.x, is.y, zStartInner(s)),
+			new THREE.Vector3(ie.x, ie.y, zEndInner(s)),
+			new THREE.Vector3(oe.x, oe.y, zEndOuter(s)),
+			new THREE.Vector3(os.x, os.y, zStartOuter(s)),
 		]);
 		sideGeometry.faces.push(...[
 			new THREE.Face3(0 + vc, 1 + vc, 2 + vc), new THREE.Face3(0 + vc, 2 + vc, 3 + vc),
@@ -347,9 +370,13 @@ export let CurvePartSideGeometry =
 
 export let CurvePartBarrierGeometry = 
 	(i_part, i_startOffset, i_endOffset, i_barrier, i_isInner, i_subdivisions) => {
-	let subdivisions = i_subdivisions || 4;
+	const subdivisions = i_subdivisions || 4;
+	const segment = i_barrier.segment;
+	
+	let barrierGeometry = new THREE.Geometry();
+	if (i_barrier.startWidth === 0 && i_barrier.endWidth === 0) { return barrierGeometry; }
 
-	const radius = i_barrier.segment.getPartRadius(i_part);
+	const radius = segment.getPartRadius(i_part);
 	const deltaPartOffset = i_endOffset - i_startOffset;
 	let subStartOffset = (i_subdivision) => i_startOffset + deltaPartOffset * i_subdivision / subdivisions;
 	let subEndOffset = (i_subdivision) => i_startOffset + deltaPartOffset * (i_subdivision + 1) / subdivisions;
@@ -358,7 +385,6 @@ export let CurvePartBarrierGeometry =
 	let outerStartRadius = (i_subdivision) => radius + subStartOffset(i_subdivision);
 	let outerEndRadius = (i_subdivision) => radius + subEndOffset(i_subdivision);
 
-	let barrierGeometry = new THREE.Geometry();
 	let barrierWidth = (i_subdivision) => i_barrier.width;
 	let barrierInnerStartRadius = (i_subdivision) => 
 		i_isInner 
@@ -376,9 +402,28 @@ export let CurvePartBarrierGeometry =
 		i_isInner
 			? innerEndRadius(i_subdivision)
 			: outerEndRadius(i_subdivision) + barrierWidth(i_subdivision);
+
+	const deltaZ = (segment.getZEnd() - segment.getZStart()) / segment.getNumberOfSteps();
+	const partZStart = segment.getZStart() + deltaZ * i_part;
+	const deltaSubZ = deltaZ / subdivisions;
+	const zStart = (s) => partZStart + deltaSubZ * s;
+	const zEnd = (s) => zStart(s + 1);
+	
+	const deltaBanking = (segment.getBankingEnd() - segment.getBankingStart()) / segment.getNumberOfSteps();
+	const partStartBanking = segment.getBankingStart() + deltaBanking * i_part;
+	const partEndBanking = segment.getBankingStart() + deltaBanking * (i_part + 1);
+	const deltaSubBanking = (partEndBanking - partStartBanking) / subdivisions;
+	const subStartBanking = (s) => partStartBanking + deltaSubBanking * s;
+	const subEndBanking = (s) => subStartBanking(s + 1);
+
+	const positiveBanking = segment.isRight ? 1 : -1;
+	const zStartInner = (s) => zStart(s) + Math.tan(subStartBanking(s) * positiveBanking) * (barrierInnerStartRadius(s) - radius); 
+	const zStartOuter = (s) => zStart(s) + Math.tan(subStartBanking(s) * positiveBanking) * (barrierOuterStartRadius(s) - radius); 
+	const zEndInner =   (s) => zEnd(s)   + Math.tan(subEndBanking(s)   * positiveBanking) * (barrierInnerEndRadius(s) - radius); 
+	const zEndOuter =   (s) => zEnd(s)   + Math.tan(subEndBanking(s)   * positiveBanking) * (barrierOuterEndRadius(s) - radius); 
 	
 	let angle = 0;
-	const partArc = i_barrier.segment.computePartDisplacement(i_part, new THREE.Vector3(), 0).rotation;	
+	const partArc = segment.computePartDisplacement(i_part, new THREE.Vector3(), 0).rotation;	
 	
 	for (let s = 0; s < subdivisions; ++s) {
 		const deltaAngle = partArc / subdivisions;
@@ -394,14 +439,14 @@ export let CurvePartBarrierGeometry =
 
 		let vc = barrierGeometry.vertices.length;
 		barrierGeometry.vertices.push(...[
-			new THREE.Vector3(is.x, is.y, 0),
-			new THREE.Vector3(ie.x, ie.y, 0),
-			new THREE.Vector3(oe.x, oe.y, 0),
-			new THREE.Vector3(os.x, os.y, 0),
-			new THREE.Vector3(is.x, is.y, i_barrier.height),
-			new THREE.Vector3(ie.x, ie.y, i_barrier.height),
-			new THREE.Vector3(oe.x, oe.y, i_barrier.height),
-			new THREE.Vector3(os.x, os.y, i_barrier.height),
+			new THREE.Vector3(is.x, is.y, zStartInner(s)),
+			new THREE.Vector3(ie.x, ie.y, zEndInner(s)),
+			new THREE.Vector3(oe.x, oe.y, zEndOuter(s)),
+			new THREE.Vector3(os.x, os.y, zStartOuter(s)),
+			new THREE.Vector3(is.x, is.y, zStartInner(s) + i_barrier.height),
+			new THREE.Vector3(ie.x, ie.y, zEndInner(s) + i_barrier.height),
+			new THREE.Vector3(oe.x, oe.y, zEndOuter(s) + i_barrier.height),
+			new THREE.Vector3(os.x, os.y, zStartOuter(s) + i_barrier.height),
 		]);
 		barrierGeometry.faces.push(...[
 			new THREE.Face3(0 + vc, 2 + vc, 1 + vc), new THREE.Face3(0 + vc, 3 + vc, 2 + vc),
@@ -415,7 +460,7 @@ export let CurvePartBarrierGeometry =
 		angle += deltaAngle;
 	}
 
-	barrierGeometry.rotateZ(i_barrier.segment.isRight ? Math.PI/2 : - Math.PI/2);
+	barrierGeometry.rotateZ(segment.isRight ? Math.PI/2 : - Math.PI/2);
 	barrierGeometry.computeFaceNormals();
 
 	return barrierGeometry;
