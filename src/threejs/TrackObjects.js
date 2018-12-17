@@ -101,10 +101,10 @@ export default (i_track, i_segmentToHighlight) => {
 			});
 
 		let trackMesh = new THREE.Mesh(geometry, trackSegmentMaterial);
-		retval.add(new THREE.LineSegments(
+		/*retval.add(new THREE.LineSegments(
 			new THREE.EdgesGeometry(geometry),
 			new THREE.LineBasicMaterial({ color: 0xff00ff })
-			));
+			));*/
 		
 		let leftBorderMesh = new THREE.Mesh(leftBorderGeometry, trackBorderMaterial);
 		let leftSideMesh = new THREE.Mesh(leftSideGeometry, trackSideMaterial);
@@ -126,10 +126,10 @@ export default (i_track, i_segmentToHighlight) => {
 
 		if (i_highlight) {
 			retval.add(new THREE.Mesh(geometry, trackSegmentHighlightMaterial));
-			retval.add(new THREE.LineSegments(
+			/*retval.add(new THREE.LineSegments(
 				new THREE.EdgesGeometry(geometry),
 				new THREE.LineBasicMaterial({ color: 0xdd6600, linewidth: 5 })
-				));
+				));*/
 		}
 
 		//retval.add(createText(i_straightSegment.name, findCenterPoint(geometry)));
@@ -226,7 +226,7 @@ export default (i_track, i_segmentToHighlight) => {
 		
 		let trackMesh = new THREE.Mesh(mergedTrackGeometry, trackSegmentMaterial);
 		retval.add(trackMesh);
-		retval.add(new THREE.LineSegments(mergedEdgeGeometry, new THREE.LineBasicMaterial({ color: 0x4400ff })));
+		//retval.add(new THREE.LineSegments(mergedEdgeGeometry, new THREE.LineBasicMaterial({ color: 0x4400ff })));
 
 		let leftBorderMesh = new THREE.Mesh(mergedLeftBorderGeometry, trackBorderMaterial);
 		let leftSideMesh = new THREE.Mesh(mergedLeftSideGeometry, trackSideMaterial);
@@ -249,7 +249,7 @@ export default (i_track, i_segmentToHighlight) => {
 		
 		if (i_highlight) {
 			retval.add(new THREE.Mesh(mergedTrackGeometry, trackSegmentHighlightMaterial));
-			retval.add(new THREE.LineSegments(mergedEdgeGeometry, new THREE.LineBasicMaterial({ color: 0xdd6600, linewidth: 5 })));
+			//retval.add(new THREE.LineSegments(mergedEdgeGeometry, new THREE.LineBasicMaterial({ color: 0xdd6600, linewidth: 5 })));
 		}
 
 		let segmentStart = i_curveSegment.mainTrack.track.computeStartOfSegment(i_curveSegment);
